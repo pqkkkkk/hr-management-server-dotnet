@@ -1,0 +1,48 @@
+# ==============================================================================
+# Docker Ignore File
+# Prevents unnecessary files from being copied into Docker build context
+# ==============================================================================
+
+# Git
+.git
+.gitignore
+
+# Build outputs
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+packages/
+
+# Test results
+TestResults/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+*.md
+!README.md

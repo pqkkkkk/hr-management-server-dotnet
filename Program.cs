@@ -23,7 +23,7 @@ if (databaseProvider == "Sqlite")
 {
     builder.Services.AddDbContext<HrManagement.Api.Data.AppDbContext>(options =>
         options.UseSqlite(connectionString));
-    
+
     // Add FluentMigrator for SQLite
     builder.Services.AddFluentMigratorCore()
         .ConfigureRunner(rb => rb
@@ -36,7 +36,7 @@ else
 {
     builder.Services.AddDbContext<HrManagement.Api.Data.AppDbContext>(options =>
         options.UseNpgsql(connectionString));
-    
+
     // Add FluentMigrator for PostgreSQL
     builder.Services.AddFluentMigratorCore()
         .ConfigureRunner(rb => rb
@@ -44,7 +44,7 @@ else
             .WithGlobalConnectionString(connectionString)
             .ScanIn(typeof(Program).Assembly).For.Migrations())
         .AddLogging(lb => lb.AddFluentMigratorConsole());
-    
+
     // Add Health Checks for PostgreSQL only
     builder.Services.AddHealthChecks()
         .AddNpgSql(connectionString);
@@ -77,21 +77,19 @@ using (var scope = app.Services.CreateScope())
         dbContext.Database.OpenConnection();
         dbContext.Database.EnsureCreated();
     }
-    
+
     var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
     runner.MigrateUp();
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+// Enable Swagger in all environments for API documentation
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Management API v1");
-        c.RoutePrefix = "swagger";
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "HR Management API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseHttpsRedirection();
 app.UseCors();

@@ -1,0 +1,71 @@
+# ==============================================================================
+# HR Management .NET API - Docker Compose
+# Includes: API Application + PostgreSQL Database
+# ==============================================================================
+# Usage:
+#   Start:    docker-compose up -d
+#   Stop:     docker-compose down
+#   Rebuild:  docker-compose up -d --build
+#   Logs:     docker-compose logs -f
+#   Clean:    docker-compose down -v (removes volumes/data)
+# ==============================================================================
+
+services:
+  # =============================================================================
+  # PostgreSQL Database
+  # =============================================================================
+  postgres:
+    image: postgres:13
+    container_name: hr-management-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: hr_management_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d hr_management_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - hr-management-network
+
+  # =============================================================================
+  # .NET API Application
+  # =============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hr-management-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5177
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=hr_management_db;Username=postgres;Password=postgres123
+      - DatabaseProvider=PostgreSQL
+    ports:
+      - "5177:5177"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hr-management-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  hr-management-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
