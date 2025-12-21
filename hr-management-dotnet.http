@@ -1,0 +1,6 @@
+@hr_management_dotnet_HostAddress = http://localhost:5177
+
+GET {{hr_management_dotnet_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
