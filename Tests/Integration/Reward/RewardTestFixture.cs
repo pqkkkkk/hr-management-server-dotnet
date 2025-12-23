@@ -11,17 +11,35 @@ using HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices;
 using HrManagement.Api.Modules.Reward.Infrastructure.Dao;
 using Xunit;
 
+[assembly: TestCollectionOrderer(
+    "HrManagement.Api.Tests.Integration.Reward.CollectionPriorityOrderer",
+    "hr-management-dotnet")]
+
 namespace HrManagement.Api.Tests.Integration.Reward;
 
+// =============================================================================
+// COLLECTION DEFINITIONS (ordered by name: 1_Query runs before 2_Command)
+// =============================================================================
+
 /// <summary>
-/// Defines a test collection for Reward module integration tests.
-/// All test classes in this collection share the same RewardTestFixture instance.
+/// Query tests collection - runs FIRST (prefix "1_")
 /// </summary>
-[CollectionDefinition("RewardTests")]
-public class RewardTestCollection : ICollectionFixture<RewardTestFixture>
+[CollectionDefinition("1_RewardQueryTests")]
+public class RewardQueryTestCollection : ICollectionFixture<RewardTestFixture>
 {
-    // This class has no code, it's just a marker for the collection definition
 }
+
+/// <summary>
+/// Command tests collection - runs SECOND (prefix "2_")
+/// </summary>
+[CollectionDefinition("2_RewardCommandTests")]
+public class RewardCommandTestCollection : ICollectionFixture<RewardTestFixture>
+{
+}
+
+// =============================================================================
+// SHARED TEST FIXTURE
+// =============================================================================
 
 /// <summary>
 /// Shared fixture for Reward module integration tests.
@@ -30,7 +48,7 @@ public class RewardTestCollection : ICollectionFixture<RewardTestFixture>
 /// Sample data comes from M202512_009_SeedSampleData.cs → Single source of truth!
 /// 
 /// Lifecycle:
-/// - Created ONCE before all tests in [Collection("RewardTests")]
+/// - Created ONCE before all tests in collection
 /// - Shared by all test classes in the collection
 /// - Disposed ONCE after all tests complete
 /// </summary>

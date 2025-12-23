@@ -78,6 +78,12 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
 
     private void ValidateRewardItems(ICollection<RewardItem> items)
     {
+        // Items are required - program must have at least one reward to exchange
+        if (items == null || items.Count == 0)
+        {
+            throw new ArgumentException("Reward program must have at least one reward item.");
+        }
+
         foreach (var item in items)
         {
             if (string.IsNullOrWhiteSpace(item.Name))

@@ -11,7 +11,7 @@ namespace HrManagement.Api.Tests.Integration.Reward;
 /// 
 /// These tests are READ-ONLY and should run before Command tests.
 /// </summary>
-[Collection("RewardTests")]
+[Collection("1_RewardQueryTests")]
 public class RewardProgramQueryServiceTests
 {
     private readonly RewardTestFixture _fixture;

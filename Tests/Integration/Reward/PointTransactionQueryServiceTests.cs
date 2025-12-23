@@ -17,7 +17,7 @@ namespace HrManagement.Api.Tests.Integration.Reward;
 /// 
 /// These tests are READ-ONLY.
 /// </summary>
-[Collection("RewardTests")]
+[Collection("1_RewardQueryTests")]
 public class PointTransactionQueryServiceTests
 {
     private readonly RewardTestFixture _fixture;
