@@ -5,6 +5,6 @@ namespace HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServic
 
 public interface IPointTransactionQueryService
 {
-    public Task<PointTransaction?> GetPointTransactionByIdAsync(Guid pointTransactionId);
+    public Task<PointTransaction?> GetPointTransactionByIdAsync(string pointTransactionId);
     public Task<PagedResult<PointTransaction>> GetPointTransactionsAsync(PointTransactionFilter filter);
 }

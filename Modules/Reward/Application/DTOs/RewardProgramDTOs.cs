@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using HrManagement.Api.Modules.Reward.Domain.Entities;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
 namespace HrManagement.Api.Modules.Reward.Application.DTOs;
@@ -60,6 +61,24 @@ public record CreateRewardProgramRequest
     /// List of policies for automatic point distribution.
     /// </summary>
     public List<CreateRewardPolicyRequest> Policies { get; init; } = new();
+
+    /// <summary>
+    /// Converts this request to a RewardProgram entity.
+    /// </summary>
+    public RewardProgram ToEntity()
+    {
+        return new RewardProgram
+        {
+            Name = Name,
+            Description = Description,
+            StartDate = StartDate,
+            EndDate = EndDate,
+            DefaultGivingBudget = DefaultGivingBudget,
+            BannerUrl = BannerUrl,
+            RewardItems = Items.Select(i => i.ToEntity()).ToList(),
+            Policies = Policies.Select(p => p.ToEntity()).ToList()
+        };
+    }
 }
 
 /// <summary>
@@ -97,6 +116,20 @@ public record CreateRewardItemRequest
     /// <example>https://example.com/gift-card.jpg</example>
     [StringLength(500)]
     public string? ImageUrl { get; init; }
+
+    /// <summary>
+    /// Converts this request to a RewardItem entity.
+    /// </summary>
+    public RewardItem ToEntity()
+    {
+        return new RewardItem
+        {
+            Name = Name,
+            RequiredPoints = RequiredPoints,
+            Quantity = Quantity,
+            ImageUrl = ImageUrl
+        };
+    }
 }
 
 /// <summary>
@@ -126,6 +159,19 @@ public record CreateRewardPolicyRequest
     [Required]
     [Range(1, int.MaxValue)]
     public int PointsPerUnit { get; init; }
+
+    /// <summary>
+    /// Converts this request to a RewardProgramPolicy entity.
+    /// </summary>
+    public RewardProgramPolicy ToEntity()
+    {
+        return new RewardProgramPolicy
+        {
+            PolicyType = PolicyType,
+            UnitValue = UnitValue,
+            PointsPerUnit = PointsPerUnit
+        };
+    }
 }
 
 #endregion
@@ -137,47 +183,32 @@ public record CreateRewardPolicyRequest
 /// </summary>
 public record RewardProgramResponse
 {
-    /// <summary>
-    /// Unique identifier of the reward program.
-    /// </summary>
-    /// <example>550e8400-e29b-41d4-a716-446655440000</example>
     public string RewardProgramId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Name of the reward program.
-    /// </summary>
-    /// <example>Q4 2024 Employee Recognition</example>
     public string Name { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Description of the reward program.
-    /// </summary>
     public string? Description { get; init; }
-
-    /// <summary>
-    /// Start date of the program.
-    /// </summary>
     public DateTime StartDate { get; init; }
-
-    /// <summary>
-    /// End date of the program.
-    /// </summary>
     public DateTime EndDate { get; init; }
-
-    /// <summary>
-    /// Status of the program: ACTIVE or INACTIVE.
-    /// </summary>
     public ProgramStatus Status { get; init; }
-
-    /// <summary>
-    /// Default giving budget for managers.
-    /// </summary>
     public int DefaultGivingBudget { get; init; }
+    public string? BannerUrl { get; init; }
 
     /// <summary>
-    /// URL to the program banner.
+    /// Creates a response from a RewardProgram entity.
     /// </summary>
-    public string? BannerUrl { get; init; }
+    public static RewardProgramResponse FromEntity(RewardProgram entity)
+    {
+        return new RewardProgramResponse
+        {
+            RewardProgramId = entity.RewardProgramId,
+            Name = entity.Name,
+            Description = entity.Description,
+            StartDate = entity.StartDate,
+            EndDate = entity.EndDate,
+            Status = entity.Status,
+            DefaultGivingBudget = entity.DefaultGivingBudget,
+            BannerUrl = entity.BannerUrl
+        };
+    }
 }
 
 /// <summary>
@@ -185,15 +216,28 @@ public record RewardProgramResponse
 /// </summary>
 public record RewardProgramDetailResponse : RewardProgramResponse
 {
-    /// <summary>
-    /// List of reward items in this program.
-    /// </summary>
     public List<RewardItemResponse> Items { get; init; } = new();
+    public List<RewardPolicyResponse> Policies { get; init; } = new();
 
     /// <summary>
-    /// List of policies for this program.
+    /// Creates a detail response from a RewardProgram entity with items and policies.
     /// </summary>
-    public List<RewardPolicyResponse> Policies { get; init; } = new();
+    public static new RewardProgramDetailResponse FromEntity(RewardProgram entity)
+    {
+        return new RewardProgramDetailResponse
+        {
+            RewardProgramId = entity.RewardProgramId,
+            Name = entity.Name,
+            Description = entity.Description,
+            StartDate = entity.StartDate,
+            EndDate = entity.EndDate,
+            Status = entity.Status,
+            DefaultGivingBudget = entity.DefaultGivingBudget,
+            BannerUrl = entity.BannerUrl,
+            Items = entity.RewardItems.Select(RewardItemResponse.FromEntity).ToList(),
+            Policies = entity.Policies.Select(RewardPolicyResponse.FromEntity).ToList()
+        };
+    }
 }
 
 /// <summary>
@@ -201,35 +245,28 @@ public record RewardProgramDetailResponse : RewardProgramResponse
 /// </summary>
 public record RewardItemResponse
 {
-    /// <summary>
-    /// Unique identifier of the reward item.
-    /// </summary>
     public string RewardItemId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// ID of the program this item belongs to.
-    /// </summary>
     public string ProgramId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Name of the reward item.
-    /// </summary>
     public string Name { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Points required to redeem this item.
-    /// </summary>
     public float RequiredPoints { get; init; }
-
-    /// <summary>
-    /// Available quantity of this item.
-    /// </summary>
     public int Quantity { get; init; }
+    public string? ImageUrl { get; init; }
 
     /// <summary>
-    /// URL to the item image.
+    /// Creates a response from a RewardItem entity.
     /// </summary>
-    public string? ImageUrl { get; init; }
+    public static RewardItemResponse FromEntity(RewardItem entity)
+    {
+        return new RewardItemResponse
+        {
+            RewardItemId = entity.RewardItemId,
+            ProgramId = entity.ProgramId,
+            Name = entity.Name,
+            RequiredPoints = entity.RequiredPoints,
+            Quantity = entity.Quantity,
+            ImageUrl = entity.ImageUrl
+        };
+    }
 }
 
 /// <summary>
@@ -237,40 +274,30 @@ public record RewardItemResponse
 /// </summary>
 public record RewardPolicyResponse
 {
-    /// <summary>
-    /// Unique identifier of the policy.
-    /// </summary>
     public string PolicyId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// ID of the program this policy belongs to.
-    /// </summary>
     public string ProgramId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Type of policy.
-    /// </summary>
     public PolicyType PolicyType { get; init; }
-
-    /// <summary>
-    /// Calculation period (currently always WEEKLY).
-    /// </summary>
     public CalculationPeriod CalculationPeriod { get; init; }
-
-    /// <summary>
-    /// The unit value for calculation.
-    /// </summary>
     public int UnitValue { get; init; }
-
-    /// <summary>
-    /// Points awarded per unit.
-    /// </summary>
     public int PointsPerUnit { get; init; }
+    public bool IsActive { get; init; }
 
     /// <summary>
-    /// Whether this policy is active.
+    /// Creates a response from a RewardProgramPolicy entity.
     /// </summary>
-    public bool IsActive { get; init; }
+    public static RewardPolicyResponse FromEntity(RewardProgramPolicy entity)
+    {
+        return new RewardPolicyResponse
+        {
+            PolicyId = entity.PolicyId,
+            ProgramId = entity.ProgramId,
+            PolicyType = entity.PolicyType,
+            CalculationPeriod = entity.CalculationPeriod,
+            UnitValue = entity.UnitValue,
+            PointsPerUnit = entity.PointsPerUnit,
+            IsActive = entity.IsActive
+        };
+    }
 }
 
 #endregion

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using HrManagement.Api.Modules.Reward.Application.DTOs;
 using HrManagement.Api.Shared.DTOs;
+using HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
 
 namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 
@@ -13,6 +14,17 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 [Microsoft.AspNetCore.Http.Tags("Reward Programs")]
 public class RewardProgramController : ControllerBase
 {
+    private readonly IRewardProgramCommandService _rewardProgramCommandService;
+    private readonly IRewardProgramQueryService _rewardProgramQueryService;
+
+    public RewardProgramController(
+        IRewardProgramCommandService rewardProgramCommandService,
+        IRewardProgramQueryService rewardProgramQueryService)
+    {
+        _rewardProgramCommandService = rewardProgramCommandService;
+        _rewardProgramQueryService = rewardProgramQueryService;
+    }
+
     /// <summary>
     /// Creates a new reward program with items and policies.
     /// </summary>
@@ -46,40 +58,11 @@ public class RewardProgramController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateRewardProgram([FromBody] CreateRewardProgramRequest request)
     {
-        // TODO: Implement service call
-        // var result = await _rewardProgramCommandService.CreateRewardProgramAsync(program);
+        var rewardProgramInfo = request.ToEntity();
 
-        // Placeholder response for Swagger documentation
-        var response = new RewardProgramDetailResponse
-        {
-            RewardProgramId = Guid.NewGuid().ToString(),
-            Name = request.Name,
-            Description = request.Description,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            Status = Domain.Entities.RewardEnums.ProgramStatus.ACTIVE,
-            DefaultGivingBudget = request.DefaultGivingBudget,
-            BannerUrl = request.BannerUrl,
-            Items = request.Items.Select(i => new RewardItemResponse
-            {
-                RewardItemId = Guid.NewGuid().ToString(),
-                ProgramId = "placeholder",
-                Name = i.Name,
-                RequiredPoints = i.RequiredPoints,
-                Quantity = i.Quantity,
-                ImageUrl = i.ImageUrl
-            }).ToList(),
-            Policies = request.Policies.Select(p => new RewardPolicyResponse
-            {
-                PolicyId = Guid.NewGuid().ToString(),
-                ProgramId = "placeholder",
-                PolicyType = p.PolicyType,
-                CalculationPeriod = Domain.Entities.RewardEnums.CalculationPeriod.WEEKLY,
-                UnitValue = p.UnitValue,
-                PointsPerUnit = p.PointsPerUnit,
-                IsActive = true
-            }).ToList()
-        };
+        var createdProgram = await _rewardProgramCommandService.CreateRewardProgramAsync(rewardProgramInfo);
+
+        var response = RewardProgramDetailResponse.FromEntity(createdProgram);
 
         return StatusCode(StatusCodes.Status201Created, ApiResponse<RewardProgramDetailResponse>.Created(response));
     }
@@ -102,46 +85,11 @@ public class RewardProgramController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRewardProgramById([FromRoute] string id)
     {
-        // TODO: Implement service call
-        // var result = await _rewardProgramQueryService.GetRewardProgramByIdAsync(Guid.Parse(id));
+        var rewardProgram = await _rewardProgramQueryService.GetRewardProgramByIdAsync(id);
 
-        // Placeholder response for Swagger documentation
-        var response = new RewardProgramDetailResponse
-        {
-            RewardProgramId = id,
-            Name = "Sample Reward Program",
-            Description = "A sample reward program for demonstration",
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddMonths(3),
-            Status = Domain.Entities.RewardEnums.ProgramStatus.ACTIVE,
-            DefaultGivingBudget = 100,
-            BannerUrl = null,
-            Items = new List<RewardItemResponse>
-            {
-                new RewardItemResponse
-                {
-                    RewardItemId = Guid.NewGuid().ToString(),
-                    ProgramId = id,
-                    Name = "Sample Gift Card",
-                    RequiredPoints = 500,
-                    Quantity = 10,
-                    ImageUrl = null
-                }
-            },
-            Policies = new List<RewardPolicyResponse>
-            {
-                new RewardPolicyResponse
-                {
-                    PolicyId = Guid.NewGuid().ToString(),
-                    ProgramId = id,
-                    PolicyType = Domain.Entities.RewardEnums.PolicyType.OVERTIME,
-                    CalculationPeriod = Domain.Entities.RewardEnums.CalculationPeriod.WEEKLY,
-                    UnitValue = 30,
-                    PointsPerUnit = 5,
-                    IsActive = true
-                }
-            }
-        };
+        var response = RewardProgramDetailResponse.FromEntity(rewardProgram == null
+            ? throw new KeyNotFoundException($"Reward program with ID {id} not found.")
+            : rewardProgram);
 
         return Ok(ApiResponse<RewardProgramDetailResponse>.Ok(response));
     }

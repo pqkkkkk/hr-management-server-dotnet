@@ -1,3 +1,5 @@
+using HrManagement.Api.Modules.Reward.Domain.Entities;
+
 namespace HrManagement.Api.Modules.Reward.Application.DTOs;
 
 /// <summary>
@@ -5,40 +7,28 @@ namespace HrManagement.Api.Modules.Reward.Application.DTOs;
 /// </summary>
 public record UserWalletResponse
 {
-    /// <summary>
-    /// Unique identifier of the wallet.
-    /// </summary>
-    /// <example>550e8400-e29b-41d4-a716-446655440000</example>
     public string UserWalletId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// User ID who owns this wallet.
-    /// </summary>
-    /// <example>user-123</example>
     public string UserId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// ID of the reward program this wallet is for.
-    /// </summary>
-    /// <example>program-456</example>
     public string ProgramId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Personal points balance that can be exchanged for items.
-    /// </summary>
-    /// <example>150</example>
     public int PersonalPoint { get; init; }
-
-    /// <summary>
-    /// Budget available for gifting points to employees (managers only).
-    /// </summary>
-    /// <example>100</example>
     public int GivingBudget { get; init; }
+    public RewardProgramResponse? Program { get; init; }
 
     /// <summary>
-    /// Associated reward program information.
+    /// Creates a response from a UserWallet entity.
     /// </summary>
-    public RewardProgramResponse? Program { get; init; }
+    public static UserWalletResponse FromEntity(UserWallet entity)
+    {
+        return new UserWalletResponse
+        {
+            UserWalletId = entity.UserWalletId,
+            UserId = entity.UserId,
+            ProgramId = entity.ProgramId,
+            PersonalPoint = entity.PersonalPoint,
+            GivingBudget = entity.GivingBudget,
+            Program = entity.Program != null ? RewardProgramResponse.FromEntity(entity.Program) : null
+        };
+    }
 }
 
 /// <summary>
@@ -46,15 +36,18 @@ public record UserWalletResponse
 /// </summary>
 public record WalletBalanceResponse
 {
-    /// <summary>
-    /// Personal points balance.
-    /// </summary>
-    /// <example>150</example>
     public int PersonalPoint { get; init; }
+    public int GivingBudget { get; init; }
 
     /// <summary>
-    /// Giving budget balance (for managers).
+    /// Creates a balance response from a UserWallet entity.
     /// </summary>
-    /// <example>100</example>
-    public int GivingBudget { get; init; }
+    public static WalletBalanceResponse FromEntity(UserWallet entity)
+    {
+        return new WalletBalanceResponse
+        {
+            PersonalPoint = entity.PersonalPoint,
+            GivingBudget = entity.GivingBudget
+        };
+    }
 }
