@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using HrManagement.Api.Modules.Reward.Application.DTOs;
 using HrManagement.Api.Shared.DTOs;
+using HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices;
 
 namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 
@@ -8,11 +9,17 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 /// API endpoints for managing user wallets in reward programs.
 /// </summary>
 [ApiController]
-[Route("api/rewards/wallets")]
+[Route("api/v1/rewards/wallets")]
 [Produces("application/json")]
 [Microsoft.AspNetCore.Http.Tags("User Wallets")]
 public class UserWalletController : ControllerBase
 {
+    private readonly IUserWalletQueryService _userWalletQueryService;
+
+    public UserWalletController(IUserWalletQueryService userWalletQueryService)
+    {
+        _userWalletQueryService = userWalletQueryService;
+    }
     /// <summary>
     /// Gets a specific wallet for a user in a reward program.
     /// </summary>
@@ -32,29 +39,11 @@ public class UserWalletController : ControllerBase
         [FromRoute] string userId,
         [FromRoute] string programId)
     {
-        // TODO: Implement service call
-        // var result = await _userWalletQueryService.GetWalletByUserAndProgramAsync(userId, programId);
+        var userWallet = await _userWalletQueryService.GetWalletByUserAndProgramAsync(userId, programId);
 
-        // Placeholder response for Swagger documentation
-        var response = new UserWalletResponse
-        {
-            UserWalletId = Guid.NewGuid().ToString(),
-            UserId = userId,
-            ProgramId = programId,
-            PersonalPoint = 150,
-            GivingBudget = 100,
-            Program = new RewardProgramResponse
-            {
-                RewardProgramId = programId,
-                Name = "Q4 2024 Recognition",
-                Description = "Quarterly employee recognition program",
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddMonths(3),
-                Status = Domain.Entities.RewardEnums.ProgramStatus.ACTIVE,
-                DefaultGivingBudget = 100,
-                BannerUrl = null
-            }
-        };
+        var response = UserWalletResponse.FromEntity(userWallet == null ?
+            throw new KeyNotFoundException("Wallet not found.")
+            : userWallet);
 
         return Ok(ApiResponse<UserWalletResponse>.Ok(response));
     }

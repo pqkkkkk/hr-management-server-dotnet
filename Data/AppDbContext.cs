@@ -78,6 +78,26 @@ public class AppDbContext : DbContext
             .HasForeignKey(iit => iit.RewardItemId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // ======================================================================
+        // ENUM TO STRING CONVERSIONS
+        // Required for FluentMigrator compatibility (migrations store as strings)
+        // ======================================================================
+        modelBuilder.Entity<RewardProgram>()
+            .Property(e => e.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<PointTransaction>()
+            .Property(e => e.Type)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<RewardProgramPolicy>()
+            .Property(e => e.PolicyType)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<RewardProgramPolicy>()
+            .Property(e => e.CalculationPeriod)
+            .HasConversion<string>();
+
         // Apply all configurations from the current assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }

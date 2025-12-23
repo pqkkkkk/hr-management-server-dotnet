@@ -5,6 +5,6 @@ namespace HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
 
 public interface IRewardProgramQueryService
 {
-    Task<RewardProgram?> GetRewardProgramByIdAsync(Guid rewardProgramId);
+    Task<RewardProgram?> GetRewardProgramByIdAsync(string rewardProgramId);
     Task<PagedResult<RewardProgram>> GetRewardProgramsAsync(RewardProgramFilter filter);
 }

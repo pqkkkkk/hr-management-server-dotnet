@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using HrManagement.Api.Modules.Reward.Domain.Commands;
+using HrManagement.Api.Modules.Reward.Domain.Entities;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
 namespace HrManagement.Api.Modules.Reward.Application.DTOs;
@@ -30,6 +32,18 @@ public record GiftPointsRequest
     [Required]
     [MinLength(1)]
     public List<GiftRecipientRequest> Recipients { get; init; } = new();
+
+    /// <summary>
+    /// Converts this request to a GiftPointsCommand.
+    /// </summary>
+    public GiftPointsCommand ToCommand()
+    {
+        return new GiftPointsCommand(
+            ProgramId,
+            SenderUserId,
+            Recipients.Select(r => r.ToGiftRecipient()).ToList()
+        );
+    }
 }
 
 /// <summary>
@@ -51,6 +65,14 @@ public record GiftRecipientRequest
     [Required]
     [Range(1, int.MaxValue)]
     public int Points { get; init; }
+
+    /// <summary>
+    /// Converts this request to a GiftRecipient record.
+    /// </summary>
+    public GiftRecipient ToGiftRecipient()
+    {
+        return new GiftRecipient(UserId, Points);
+    }
 }
 
 /// <summary>
@@ -78,6 +100,21 @@ public record ExchangePointsRequest
     [Required]
     [MinLength(1)]
     public List<ExchangeItemRequest> Items { get; init; } = new();
+
+    /// <summary>
+    /// Converts this request to a PointTransaction entity.
+    /// Note: Requires walletId to be looked up separately.
+    /// </summary>
+    public PointTransaction ToEntity()
+    {
+        return new PointTransaction
+        {
+            Type = TransactionType.EXCHANGE,
+            DestinationWalletId = UserId,
+            SourceWalletId = UserId,
+            Items = Items.Select(i => i.ToEntity()).ToList()
+        };
+    }
 }
 
 /// <summary>
@@ -99,6 +136,18 @@ public record ExchangeItemRequest
     [Required]
     [Range(1, int.MaxValue)]
     public int Quantity { get; init; }
+
+    /// <summary>
+    /// Converts this request to an ItemInTransaction entity.
+    /// </summary>
+    public ItemInTransaction ToEntity()
+    {
+        return new ItemInTransaction
+        {
+            RewardItemId = RewardItemId,
+            Quantity = Quantity
+        };
+    }
 }
 
 #endregion
@@ -110,37 +159,28 @@ public record ExchangeItemRequest
 /// </summary>
 public record PointTransactionResponse
 {
-    /// <summary>
-    /// Unique identifier of the transaction.
-    /// </summary>
-    /// <example>550e8400-e29b-41d4-a716-446655440000</example>
     public string PointTransactionId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Type of transaction: GIFT, EXCHANGE, or POLICY_REWARD.
-    /// </summary>
     public TransactionType Type { get; init; }
-
-    /// <summary>
-    /// Amount of points transferred.
-    /// </summary>
-    /// <example>50</example>
     public float Amount { get; init; }
-
-    /// <summary>
-    /// ID of the source wallet (for GIFT transactions).
-    /// </summary>
     public string? SourceWalletId { get; init; }
-
-    /// <summary>
-    /// ID of the destination wallet.
-    /// </summary>
     public string? DestinationWalletId { get; init; }
+    public DateTime CreatedAt { get; init; }
 
     /// <summary>
-    /// Timestamp when the transaction was created.
+    /// Creates a response from a PointTransaction entity.
     /// </summary>
-    public DateTime CreatedAt { get; init; }
+    public static PointTransactionResponse FromEntity(PointTransaction entity)
+    {
+        return new PointTransactionResponse
+        {
+            PointTransactionId = entity.PointTransactionId,
+            Type = entity.Type,
+            Amount = entity.Amount,
+            SourceWalletId = entity.SourceWalletId,
+            DestinationWalletId = entity.DestinationWalletId,
+            CreatedAt = entity.CreatedAt
+        };
+    }
 }
 
 /// <summary>
@@ -148,10 +188,24 @@ public record PointTransactionResponse
 /// </summary>
 public record PointTransactionDetailResponse : PointTransactionResponse
 {
-    /// <summary>
-    /// List of items involved in this transaction (for EXCHANGE type).
-    /// </summary>
     public List<ItemInTransactionResponse> Items { get; init; } = new();
+
+    /// <summary>
+    /// Creates a detail response from a PointTransaction entity with items.
+    /// </summary>
+    public static new PointTransactionDetailResponse FromEntity(PointTransaction entity)
+    {
+        return new PointTransactionDetailResponse
+        {
+            PointTransactionId = entity.PointTransactionId,
+            Type = entity.Type,
+            Amount = entity.Amount,
+            SourceWalletId = entity.SourceWalletId,
+            DestinationWalletId = entity.DestinationWalletId,
+            CreatedAt = entity.CreatedAt,
+            Items = entity.Items.Select(ItemInTransactionResponse.FromEntity).ToList()
+        };
+    }
 }
 
 /// <summary>
@@ -159,25 +213,24 @@ public record PointTransactionDetailResponse : PointTransactionResponse
 /// </summary>
 public record ItemInTransactionResponse
 {
-    /// <summary>
-    /// ID of the reward item.
-    /// </summary>
     public string RewardItemId { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Name of the reward item.
-    /// </summary>
     public string RewardItemName { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Quantity of items exchanged.
-    /// </summary>
     public int Quantity { get; init; }
+    public int TotalPoints { get; init; }
 
     /// <summary>
-    /// Total points spent for these items.
+    /// Creates a response from an ItemInTransaction entity.
     /// </summary>
-    public int TotalPoints { get; init; }
+    public static ItemInTransactionResponse FromEntity(ItemInTransaction entity)
+    {
+        return new ItemInTransactionResponse
+        {
+            RewardItemId = entity.RewardItemId,
+            RewardItemName = entity.RewardItem?.Name ?? string.Empty,
+            Quantity = entity.Quantity,
+            TotalPoints = entity.TotalPoints
+        };
+    }
 }
 
 #endregion

@@ -4,8 +4,17 @@ var builder = WebApplication.CreateBuilder(args);
 // SERVICES CONFIGURATION
 // =============================================================================
 
-// Add Controllers
-builder.Services.AddControllers();
+// Add Controllers with JSON options
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Serialize enums as strings instead of integers
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
+// Add Exception Handler
+builder.Services.AddExceptionHandler<HrManagement.Api.Shared.ExceptionHandlers.GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
@@ -50,16 +59,68 @@ else
         .AddNpgSql(connectionString);
 }
 
-// Add CORS
+// Add CORS - Development allows any origin, Production can be configured
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: Allow any origin for easy testing
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            // Production: Check AllowedOrigins configuration
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+                ?? Array.Empty<string>();
+
+            // If AllowedOrigins is empty or contains "*", allow any origin
+            if (allowedOrigins.Length == 0 || allowedOrigins.Contains("*"))
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
+            else
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials(); // Enable credentials only with specific origins
+            }
+        }
     });
 });
+
+// =============================================================================
+// DEPENDENCY INJECTION - REWARD MODULE
+// =============================================================================
+
+// DAOs
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Dao.IRewardProgramDao,
+    HrManagement.Api.Modules.Reward.Infrastructure.Dao.RewardProgramDao>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Dao.IPointTransactionDao,
+    HrManagement.Api.Modules.Reward.Infrastructure.Dao.PointTransactionDao>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Dao.IUserWalletDao,
+    HrManagement.Api.Modules.Reward.Infrastructure.Dao.UserWalletDao>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Dao.IRewardItemDao,
+    HrManagement.Api.Modules.Reward.Infrastructure.Dao.RewardItemDao>();
+
+// Services
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices.IRewardProgramQueryService,
+    HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices.RewardProgramQueryServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices.IRewardProgramCommandService,
+    HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices.RewardProgramCommandServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices.IPointTransactionQueryService,
+    HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices.PointTransactionQueryServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices.IPointTransactionCommandService,
+    HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices.PointTransactionCommandServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices.IUserWalletQueryService,
+    HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices.UserWalletQueryServiceImpl>();
+
 
 var app = builder.Build();
 
@@ -83,6 +144,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// Global exception handling - must be first in the pipeline
+app.UseExceptionHandler();
+
 // Enable Swagger in all environments for API documentation
 app.UseSwagger();
 app.UseSwaggerUI(c =>

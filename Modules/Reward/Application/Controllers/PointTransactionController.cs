@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using HrManagement.Api.Modules.Reward.Application.DTOs;
 using HrManagement.Api.Modules.Reward.Domain.Filter;
 using HrManagement.Api.Shared.DTOs;
+using HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices;
 
 namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 
@@ -9,11 +10,21 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 /// API endpoints for point transactions (gift, exchange, history).
 /// </summary>
 [ApiController]
-[Route("api/rewards/transactions")]
+[Route("api/v1/rewards/transactions")]
 [Produces("application/json")]
 [Microsoft.AspNetCore.Http.Tags("Point Transactions")]
 public class PointTransactionController : ControllerBase
 {
+    private readonly IPointTransactionCommandService _pointTransactionCommandService;
+    private readonly IPointTransactionQueryService _pointTransactionQueryService;
+
+    public PointTransactionController(
+        IPointTransactionCommandService pointTransactionCommandService,
+        IPointTransactionQueryService pointTransactionQueryService)
+    {
+        _pointTransactionCommandService = pointTransactionCommandService;
+        _pointTransactionQueryService = pointTransactionQueryService;
+    }
     /// <summary>
     /// Gets transaction history with filtering and pagination.
     /// </summary>
@@ -34,50 +45,16 @@ public class PointTransactionController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<PagedResult<PointTransactionDetailResponse>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTransactionHistory([FromQuery] PointTransactionFilter filter)
     {
-        // TODO: Implement service call
-        // var result = await _pointTransactionQueryService.GetPointTransactionsAsync(filter);
+        var result = await _pointTransactionQueryService.GetPointTransactionsAsync(filter);
 
-        // Placeholder response for Swagger documentation
-        var transactions = new List<PointTransactionDetailResponse>
-        {
-            new PointTransactionDetailResponse
-            {
-                PointTransactionId = Guid.NewGuid().ToString(),
-                Type = Domain.Entities.RewardEnums.TransactionType.GIFT,
-                Amount = 50,
-                SourceWalletId = Guid.NewGuid().ToString(),
-                DestinationWalletId = Guid.NewGuid().ToString(),
-                CreatedAt = DateTime.UtcNow.AddDays(-1),
-                Items = new List<ItemInTransactionResponse>() // Empty for GIFT transactions
-            },
-            new PointTransactionDetailResponse
-            {
-                PointTransactionId = Guid.NewGuid().ToString(),
-                Type = Domain.Entities.RewardEnums.TransactionType.EXCHANGE,
-                Amount = 100,
-                SourceWalletId = null,
-                DestinationWalletId = Guid.NewGuid().ToString(),
-                CreatedAt = DateTime.UtcNow.AddDays(-2),
-                Items = new List<ItemInTransactionResponse>
-                {
-                    new ItemInTransactionResponse
-                    {
-                        RewardItemId = Guid.NewGuid().ToString(),
-                        RewardItemName = "Amazon Gift Card $50",
-                        Quantity = 1,
-                        TotalPoints = 100
-                    }
-                }
-            }
-        };
+        var dtoItems = result.Items.Select(item => PointTransactionDetailResponse.FromEntity(item)).ToList();
 
-        var pagedResult = PagedResult<PointTransactionDetailResponse>.Create(
-            transactions,
-            totalItems: 2,
-            page: filter.PageNumber,
-            pageSize: filter.PageSize
+        var pagedResult = new PagedResult<PointTransactionDetailResponse>(
+            dtoItems,
+            result.TotalItems,
+            result.Page,
+            result.PageSize
         );
-
         return Ok(ApiResponse<PagedResult<PointTransactionDetailResponse>>.Ok(pagedResult));
     }
 
@@ -96,29 +73,11 @@ public class PointTransactionController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTransactionById([FromRoute] string id)
     {
-        // TODO: Implement service call
-        // var result = await _pointTransactionQueryService.GetPointTransactionByIdAsync(Guid.Parse(id));
+        var transaction = await _pointTransactionQueryService.GetPointTransactionByIdAsync(id);
 
-        // Placeholder response for Swagger documentation
-        var response = new PointTransactionDetailResponse
-        {
-            PointTransactionId = id,
-            Type = Domain.Entities.RewardEnums.TransactionType.EXCHANGE,
-            Amount = 500,
-            SourceWalletId = null,
-            DestinationWalletId = Guid.NewGuid().ToString(),
-            CreatedAt = DateTime.UtcNow,
-            Items = new List<ItemInTransactionResponse>
-            {
-                new ItemInTransactionResponse
-                {
-                    RewardItemId = Guid.NewGuid().ToString(),
-                    RewardItemName = "Amazon Gift Card $50",
-                    Quantity = 1,
-                    TotalPoints = 500
-                }
-            }
-        };
+        var response = transaction != null
+            ? PointTransactionDetailResponse.FromEntity(transaction)
+            : throw new KeyNotFoundException($"Point transaction with ID {id} not found.");
 
         return Ok(ApiResponse<PointTransactionDetailResponse>.Ok(response));
     }
@@ -161,18 +120,14 @@ public class PointTransactionController : ControllerBase
         // var result = await _pointTransactionCommandService.GiftPointsToEmployeesAsync(command);
 
         // Placeholder response for Swagger documentation
-        var transactions = request.Recipients.Select(r => new PointTransactionResponse
-        {
-            PointTransactionId = Guid.NewGuid().ToString(),
-            Type = Domain.Entities.RewardEnums.TransactionType.GIFT,
-            Amount = r.Points,
-            SourceWalletId = Guid.NewGuid().ToString(),
-            DestinationWalletId = Guid.NewGuid().ToString(),
-            CreatedAt = DateTime.UtcNow
-        }).ToList();
+        var giftCommand = request.ToCommand();
+
+        var transactions = await _pointTransactionCommandService.GiftPointsToEmployeesAsync(giftCommand);
+
+        var response = transactions.Select(PointTransactionResponse.FromEntity).ToList();
 
         return StatusCode(StatusCodes.Status201Created,
-            ApiResponse<List<PointTransactionResponse>>.Created(transactions, "Points gifted successfully"));
+            ApiResponse<List<PointTransactionResponse>>.Created(response, "Points gifted successfully"));
     }
 
     /// <summary>
@@ -211,22 +166,11 @@ public class PointTransactionController : ControllerBase
         // var result = await _pointTransactionCommandService.ExchangePointsAsync(transaction);
 
         // Placeholder response for Swagger documentation
-        var response = new PointTransactionDetailResponse
-        {
-            PointTransactionId = Guid.NewGuid().ToString(),
-            Type = Domain.Entities.RewardEnums.TransactionType.EXCHANGE,
-            Amount = request.Items.Sum(i => i.Quantity * 100), // Placeholder calculation
-            SourceWalletId = null,
-            DestinationWalletId = Guid.NewGuid().ToString(),
-            CreatedAt = DateTime.UtcNow,
-            Items = request.Items.Select(i => new ItemInTransactionResponse
-            {
-                RewardItemId = i.RewardItemId,
-                RewardItemName = "Sample Item",
-                Quantity = i.Quantity,
-                TotalPoints = i.Quantity * 100 // Placeholder calculation
-            }).ToList()
-        };
+        var transaction = request.ToEntity();
+
+        var createdTransaction = await _pointTransactionCommandService.ExchangePointsAsync(transaction);
+
+        var response = PointTransactionDetailResponse.FromEntity(createdTransaction);
 
         return StatusCode(StatusCodes.Status201Created,
             ApiResponse<PointTransactionDetailResponse>.Created(response, "Points exchanged successfully"));

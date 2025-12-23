@@ -201,6 +201,34 @@ dotnet publish -c Release
 
 ---
 
+## ☁️ Deploy lên Google Cloud Run
+
+### Environment Variables
+
+Khi deploy lên Cloud Run qua Google Cloud Console, cần cấu hình các biến môi trường sau:
+
+| Variable | Giá trị | Mô tả |
+|----------|---------|-------|
+| `ASPNETCORE_ENVIRONMENT` | `Production` | Môi trường chạy ứng dụng |
+| `DatabaseProvider` | `PostgreSQL` | Provider database |
+| `ConnectionStrings__DefaultConnection` | `Host=<IP>;Database=hr_management_db;Username=<user>;Password=<pass>` | Connection string đến PostgreSQL |
+| `AllowedOrigins__0` | `https://your-frontend.com` | Domain frontend được phép CORS |
+
+> **Lưu ý**: Nếu sử dụng Cloud SQL, có thể dùng Unix socket:
+> `Host=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME;Database=...`
+
+### Cấu hình Cloud Run
+
+| Setting | Giá trị khuyến nghị |
+|---------|---------------------|
+| **Port** | `5177` |
+| **Memory** | `512 MiB` trở lên |
+| **CPU** | `1` |
+| **Min instances** | `0` (hoặc `1` để tránh cold start) |
+| **Max instances** | `10` |
+
+---
+
 ## 🔗 API Documentation
 
 Truy cập Swagger UI tại: http://localhost:5177/swagger
