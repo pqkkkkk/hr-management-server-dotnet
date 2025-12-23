@@ -12,6 +12,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
+// Add Exception Handler
+builder.Services.AddExceptionHandler<HrManagement.Api.Shared.ExceptionHandlers.GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -55,14 +59,39 @@ else
         .AddNpgSql(connectionString);
 }
 
-// Add CORS
+// Add CORS - Development allows any origin, Production can be configured
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: Allow any origin for easy testing
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            // Production: Check AllowedOrigins configuration
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+                ?? Array.Empty<string>();
+
+            // If AllowedOrigins is empty or contains "*", allow any origin
+            if (allowedOrigins.Length == 0 || allowedOrigins.Contains("*"))
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            }
+            else
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials(); // Enable credentials only with specific origins
+            }
+        }
     });
 });
 
@@ -115,6 +144,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// Global exception handling - must be first in the pipeline
+app.UseExceptionHandler();
+
 // Enable Swagger in all environments for API documentation
 app.UseSwagger();
 app.UseSwaggerUI(c =>

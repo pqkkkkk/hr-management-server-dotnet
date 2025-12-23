@@ -10,7 +10,7 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 /// API endpoints for point transactions (gift, exchange, history).
 /// </summary>
 [ApiController]
-[Route("api/rewards/transactions")]
+[Route("api/v1/rewards/transactions")]
 [Produces("application/json")]
 [Microsoft.AspNetCore.Http.Tags("Point Transactions")]
 public class PointTransactionController : ControllerBase

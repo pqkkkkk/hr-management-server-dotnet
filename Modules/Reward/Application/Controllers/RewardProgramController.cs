@@ -9,7 +9,7 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 /// API endpoints for managing reward programs.
 /// </summary>
 [ApiController]
-[Route("api/rewards/programs")]
+[Route("api/v1/rewards/programs")]
 [Produces("application/json")]
 [Microsoft.AspNetCore.Http.Tags("Reward Programs")]
 public class RewardProgramController : ControllerBase

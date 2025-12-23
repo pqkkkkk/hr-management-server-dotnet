@@ -9,7 +9,7 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 /// API endpoints for managing user wallets in reward programs.
 /// </summary>
 [ApiController]
-[Route("api/rewards/wallets")]
+[Route("api/v1/rewards/wallets")]
 [Produces("application/json")]
 [Microsoft.AspNetCore.Http.Tags("User Wallets")]
 public class UserWalletController : ControllerBase
