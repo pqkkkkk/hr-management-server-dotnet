@@ -39,8 +39,8 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalItems);
-        Assert.Equal(2, result.Items.Count());
+        Assert.Equal(4, result.TotalItems);  // program-001, 002, 003, 004
+        Assert.Equal(4, result.Items.Count());
         Assert.Equal(1, result.TotalPages);
         Assert.False(result.HasNextPage);
         Assert.False(result.HasPreviousPage);
@@ -87,12 +87,11 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(1, result.TotalItems);
-        Assert.Single(result.Items);
+        Assert.Equal(3, result.TotalItems);  // program-001, 003, 004 are ACTIVE
+        Assert.Equal(3, result.Items.Count());
 
         var items = result.Items.ToList();
-        Assert.Equal(ProgramStatus.ACTIVE, items[0].Status);
-        Assert.Equal("program-001", items[0].RewardProgramId);
+        Assert.All(items, p => Assert.Equal(ProgramStatus.ACTIVE, p.Status));
     }
 
     [Fact]
@@ -136,9 +135,9 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalItems);
+        Assert.Equal(4, result.TotalItems);  // 4 total programs
         Assert.Single(result.Items);
-        Assert.Equal(2, result.TotalPages);
+        Assert.Equal(4, result.TotalPages);
         Assert.True(result.HasNextPage);
         Assert.False(result.HasPreviousPage);
     }
@@ -159,9 +158,9 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalItems);
+        Assert.Equal(4, result.TotalItems);  // 4 total programs
         Assert.Single(result.Items);
-        Assert.False(result.HasNextPage);
+        Assert.True(result.HasNextPage);  // Has page 3 and 4
         Assert.True(result.HasPreviousPage);
     }
 
@@ -182,7 +181,8 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        var program = result.Items.First();
+        // Find program-001 specifically for this test
+        var program = result.Items.First(p => p.RewardProgramId == "program-001");
 
         // Verify items are loaded (program-001 has 3 items: item-001, item-002, item-003)
         Assert.NotEmpty(program.RewardItems);

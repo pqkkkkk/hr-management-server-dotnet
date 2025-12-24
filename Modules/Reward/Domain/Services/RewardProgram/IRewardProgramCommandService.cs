@@ -12,6 +12,17 @@ public interface IRewardProgramCommandService
     Task<RewardProgram> CreateRewardProgramAsync(RewardProgram program);
 
     /// <summary>
+    /// Updates an existing reward program.
+    /// The entity should contain the updated values. EF Core change tracking handles partial updates.
+    /// </summary>
+    Task<RewardProgram> UpdateRewardProgramAsync(RewardProgram program);
+
+    /// <summary>
+    /// Deletes a reward program by ID.
+    /// </summary>
+    Task DeleteRewardProgramAsync(string programId);
+
+    /// <summary>
     /// Deactivates a reward program. Points become frozen (no gift/exchange).
     /// </summary>
     Task DeactivateRewardProgramAsync(string programId);
