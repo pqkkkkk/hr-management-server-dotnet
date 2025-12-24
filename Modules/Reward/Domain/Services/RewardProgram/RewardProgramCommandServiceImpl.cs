@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using HrManagement.Api.Data;
 using HrManagement.Api.Modules.Reward.Domain.Dao;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
@@ -222,6 +223,109 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
         {
             policy.IsActive = false;
         }
+    }
+
+    #endregion
+
+    #region UpdateRewardProgram
+
+    /// <summary>
+    /// Updates an existing reward program.
+    /// The entity should already contain updated values from controller mapping.
+    /// </summary>
+    public async Task<RewardProgram> UpdateRewardProgramAsync(RewardProgram program)
+    {
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            // Validate program exists
+            var existingProgram = await _rewardProgramDao.GetByIdAsync(program.RewardProgramId)
+                ?? throw new KeyNotFoundException($"Reward program with ID {program.RewardProgramId} not found.");
+
+            // Validate dates
+            if (program.EndDate <= program.StartDate)
+            {
+                throw new ArgumentException("End date must be after start date.");
+            }
+
+            // Validate items
+            if (program.RewardItems.Count == 0)
+            {
+                throw new ArgumentException("Reward program must have at least one reward item.");
+            }
+
+            // Handle items update - remove old, add new
+            var existingItems = existingProgram.RewardItems.ToList();
+            foreach (var item in existingItems)
+            {
+                _dbContext.Set<RewardItem>().Remove(item);
+            }
+            foreach (var item in program.RewardItems)
+            {
+                item.ProgramId = program.RewardProgramId;
+                if (string.IsNullOrEmpty(item.RewardItemId))
+                {
+                    item.RewardItemId = Guid.NewGuid().ToString();
+                }
+            }
+
+            // Handle policies update - remove old, add new
+            var existingPolicies = existingProgram.Policies.ToList();
+            foreach (var policy in existingPolicies)
+            {
+                _dbContext.Set<RewardProgramPolicy>().Remove(policy);
+            }
+            foreach (var policy in program.Policies)
+            {
+                policy.ProgramId = program.RewardProgramId;
+                if (string.IsNullOrEmpty(policy.PolicyId))
+                {
+                    policy.PolicyId = Guid.NewGuid().ToString();
+                }
+            }
+
+            // Update the program
+            _dbContext.Entry(existingProgram).CurrentValues.SetValues(program);
+            existingProgram.RewardItems = program.RewardItems;
+            existingProgram.Policies = program.Policies;
+
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return existingProgram;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    #endregion
+
+    #region DeleteRewardProgram
+
+    /// <summary>
+    /// Deletes a reward program by ID.
+    /// </summary>
+    public async Task DeleteRewardProgramAsync(string programId)
+    {
+        var program = await _rewardProgramDao.GetByIdAsync(programId)
+            ?? throw new KeyNotFoundException($"Reward program with ID {programId} not found.");
+
+        // Check if program has any transactions (business rule: can't delete if has transactions)
+        // Transactions are linked to program via wallets
+        var hasTransactions = await _dbContext.PointTransactions
+            .AnyAsync(t =>
+                (t.SourceWallet != null && t.SourceWallet.ProgramId == programId) ||
+                (t.DestinationWallet != null && t.DestinationWallet.ProgramId == programId));
+
+        if (hasTransactions)
+        {
+            throw new InvalidOperationException("Cannot delete a reward program that has transactions. Consider deactivating instead.");
+        }
+
+        await _rewardProgramDao.DeleteAsync(programId);
     }
 
     #endregion

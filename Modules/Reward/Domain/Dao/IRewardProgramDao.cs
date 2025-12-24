@@ -28,4 +28,9 @@ public interface IRewardProgramDao
     /// Updates an existing reward program.
     /// </summary>
     Task UpdateAsync(RewardProgram program);
+
+    /// <summary>
+    /// Deletes a reward program by ID.
+    /// </summary>
+    Task DeleteAsync(string id);
 }

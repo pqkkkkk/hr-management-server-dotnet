@@ -174,6 +174,149 @@ public record CreateRewardPolicyRequest
     }
 }
 
+/// <summary>
+/// Request DTO for updating an existing reward program.
+/// All fields are optional - only provided fields will be updated.
+/// </summary>
+public record UpdateRewardProgramRequest
+{
+    /// <summary>
+    /// New name of the reward program.
+    /// </summary>
+    /// <example>Q4 2024 Employee Recognition - Updated</example>
+    [StringLength(255)]
+    public string? Name { get; init; }
+
+    /// <summary>
+    /// New description of the reward program.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
+    /// New start date of the program.
+    /// </summary>
+    public DateTime? StartDate { get; init; }
+
+    /// <summary>
+    /// New end date of the program.
+    /// </summary>
+    public DateTime? EndDate { get; init; }
+
+    /// <summary>
+    /// New default points budget for managers.
+    /// </summary>
+    public int? DefaultGivingBudget { get; init; }
+
+    /// <summary>
+    /// New banner URL.
+    /// </summary>
+    [StringLength(500)]
+    public string? BannerUrl { get; init; }
+
+    /// <summary>
+    /// Updated list of reward items. Required - replaces existing items.
+    /// </summary>
+    [Required]
+    public List<UpdateRewardItemRequest> Items { get; init; } = new();
+
+    /// <summary>
+    /// Updated list of policies.
+    /// </summary>
+    public List<UpdateRewardPolicyRequest> Policies { get; init; } = new();
+
+    /// <summary>
+    /// Converts this update request to a RewardProgram entity.
+    /// </summary>
+    public RewardProgram ToEntity(string programId)
+    {
+        return new RewardProgram
+        {
+            RewardProgramId = programId,
+            Name = Name ?? string.Empty,
+            Description = Description,
+            StartDate = StartDate ?? DateTime.UtcNow,
+            EndDate = EndDate ?? DateTime.UtcNow.AddMonths(3),
+            DefaultGivingBudget = DefaultGivingBudget ?? 100,
+            BannerUrl = BannerUrl,
+            RewardItems = Items.Select(i => i.ToEntity(programId)).ToList(),
+            Policies = Policies.Select(p => p.ToEntity(programId)).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// Request DTO for updating a reward item.
+/// </summary>
+public record UpdateRewardItemRequest
+{
+    /// <summary>
+    /// ID of existing item to update. If null, creates a new item.
+    /// </summary>
+    public string? RewardItemId { get; init; }
+
+    [Required]
+    [StringLength(255)]
+    public string Name { get; init; } = string.Empty;
+
+    [Required]
+    [Range(1, float.MaxValue)]
+    public float RequiredPoints { get; init; }
+
+    [Required]
+    [Range(0, int.MaxValue)]
+    public int Quantity { get; init; }
+
+    [StringLength(500)]
+    public string? ImageUrl { get; init; }
+
+    public RewardItem ToEntity(string programId)
+    {
+        return new RewardItem
+        {
+            RewardItemId = RewardItemId ?? Guid.NewGuid().ToString(),
+            ProgramId = programId,
+            Name = Name,
+            RequiredPoints = RequiredPoints,
+            Quantity = Quantity,
+            ImageUrl = ImageUrl
+        };
+    }
+}
+
+/// <summary>
+/// Request DTO for updating a reward policy.
+/// </summary>
+public record UpdateRewardPolicyRequest
+{
+    /// <summary>
+    /// ID of existing policy to update. If null, creates a new policy.
+    /// </summary>
+    public string? PolicyId { get; init; }
+
+    [Required]
+    public PolicyType PolicyType { get; init; }
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int UnitValue { get; init; } = 1;
+
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int PointsPerUnit { get; init; }
+
+    public RewardProgramPolicy ToEntity(string programId)
+    {
+        return new RewardProgramPolicy
+        {
+            PolicyId = PolicyId ?? Guid.NewGuid().ToString(),
+            ProgramId = programId,
+            PolicyType = PolicyType,
+            UnitValue = UnitValue,
+            PointsPerUnit = PointsPerUnit
+        };
+    }
+}
+
 #endregion
 
 #region Response DTOs

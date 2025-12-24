@@ -109,4 +109,22 @@ public class RewardProgramDao : IRewardProgramDao
         _context.RewardPrograms.Update(program);
         await _context.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// Deletes a reward program by ID.
+    /// This will cascade delete related Items and Policies.
+    /// </summary>
+    public async Task DeleteAsync(string id)
+    {
+        var program = await _context.RewardPrograms
+            .Include(p => p.RewardItems)
+            .Include(p => p.Policies)
+            .FirstOrDefaultAsync(p => p.RewardProgramId == id);
+
+        if (program != null)
+        {
+            _context.RewardPrograms.Remove(program);
+            await _context.SaveChangesAsync();
+        }
+    }
 }
