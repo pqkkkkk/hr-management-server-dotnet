@@ -1,6 +1,7 @@
 using Xunit;
 using HrManagement.Api.Modules.Reward.Domain.Filter;
 using HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices;
+using HrManagement.Api.Tests.Integration;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
 namespace HrManagement.Api.Tests.Integration.Reward;
@@ -20,9 +21,9 @@ namespace HrManagement.Api.Tests.Integration.Reward;
 [Collection("1_RewardQueryTests")]
 public class PointTransactionQueryServiceTests
 {
-    private readonly RewardTestFixture _fixture;
+    private readonly SharedTestFixture _fixture;
 
-    public PointTransactionQueryServiceTests(RewardTestFixture fixture)
+    public PointTransactionQueryServiceTests(SharedTestFixture fixture)
     {
         _fixture = fixture;
     }

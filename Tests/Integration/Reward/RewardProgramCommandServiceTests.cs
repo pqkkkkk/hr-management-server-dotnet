@@ -1,13 +1,14 @@
 using Xunit;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
 using HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
+using HrManagement.Api.Tests.Integration;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
 namespace HrManagement.Api.Tests.Integration.Reward;
 
 /// <summary>
 /// Integration tests for RewardProgramCommandServiceImpl.
-/// Uses shared database from RewardTestFixture (via Collection).
+/// Uses shared database from SharedTestFixture (via Collection).
 /// 
 /// IMPORTANT: These tests CREATE NEW data to avoid modifying seed data.
 /// Test-created programs use prefix "test-" to distinguish from seed data.
@@ -15,9 +16,9 @@ namespace HrManagement.Api.Tests.Integration.Reward;
 [Collection("2_RewardCommandTests")]
 public class RewardProgramCommandServiceTests
 {
-    private readonly RewardTestFixture _fixture;
+    private readonly SharedTestFixture _fixture;
 
-    public RewardProgramCommandServiceTests(RewardTestFixture fixture)
+    public RewardProgramCommandServiceTests(SharedTestFixture fixture)
     {
         _fixture = fixture;
     }

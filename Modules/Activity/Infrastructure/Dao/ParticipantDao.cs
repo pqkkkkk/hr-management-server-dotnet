@@ -38,7 +38,7 @@ public class ParticipantDao : IParticipantDao
         return await _context.Participants
             .Where(p => p.ActivityId == activityId)
             .Include(p => p.ActivityLogs)
-            .OrderByDescending(p => p.TotalScore)
+            .OrderByDescending(p => (double)p.TotalScore)
             .ToListAsync();
     }
 
@@ -87,7 +87,7 @@ public class ParticipantDao : IParticipantDao
     {
         return await _context.Participants
             .Where(p => p.ActivityId == activityId && p.Status == ParticipantStatus.ACTIVE)
-            .OrderByDescending(p => p.TotalScore)
+            .OrderByDescending(p => (double)p.TotalScore)
             .Take(top)
             .ToListAsync();
     }

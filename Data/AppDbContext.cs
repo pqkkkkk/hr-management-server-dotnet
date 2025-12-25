@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
+using System.Text.Json;
 
 namespace HrManagement.Api.Data;
 
@@ -134,6 +135,15 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ActivityLog>()
             .Property(e => e.Status)
             .HasConversion<string>();
+
+        // JsonDocument to string conversion for Activity.Config
+        // Required for SQLite compatibility (stores as TEXT)
+        modelBuilder.Entity<HrManagement.Api.Modules.Activity.Domain.Entities.Activity>()
+            .Property(e => e.Config)
+            .HasConversion(
+                v => v == null ? null : v.RootElement.GetRawText(),
+                v => v == null ? null : JsonDocument.Parse(v, default)
+            );
 
         // Apply all configurations from the current assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
