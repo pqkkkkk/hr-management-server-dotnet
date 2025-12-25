@@ -1,5 +1,6 @@
 using Xunit;
 using HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices;
+using HrManagement.Api.Tests.Integration;
 
 namespace HrManagement.Api.Tests.Integration.Reward;
 
@@ -20,9 +21,9 @@ namespace HrManagement.Api.Tests.Integration.Reward;
 [Collection("1_RewardQueryTests")]
 public class UserWalletQueryServiceTests
 {
-    private readonly RewardTestFixture _fixture;
+    private readonly SharedTestFixture _fixture;
 
-    public UserWalletQueryServiceTests(RewardTestFixture fixture)
+    public UserWalletQueryServiceTests(SharedTestFixture fixture)
     {
         _fixture = fixture;
     }

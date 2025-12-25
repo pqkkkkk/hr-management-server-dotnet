@@ -1,22 +1,23 @@
 using Xunit;
 using HrManagement.Api.Modules.Reward.Domain.Filter;
 using HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
+using HrManagement.Api.Tests.Integration;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
 namespace HrManagement.Api.Tests.Integration.Reward;
 
 /// <summary>
 /// Integration tests for RewardProgramQueryServiceImpl.
-/// Uses shared database from RewardTestFixture (via Collection).
+/// Uses shared database from SharedTestFixture (via Collection).
 /// 
 /// These tests are READ-ONLY and should run before Command tests.
 /// </summary>
 [Collection("1_RewardQueryTests")]
 public class RewardProgramQueryServiceTests
 {
-    private readonly RewardTestFixture _fixture;
+    private readonly SharedTestFixture _fixture;
 
-    public RewardProgramQueryServiceTests(RewardTestFixture fixture)
+    public RewardProgramQueryServiceTests(SharedTestFixture fixture)
     {
         _fixture = fixture;
     }

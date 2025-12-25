@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
+using System.Text.Json;
 
 namespace HrManagement.Api.Data;
 
@@ -26,7 +27,9 @@ public class AppDbContext : DbContext
     // ==========================================================================
     // ACTIVITY MODULE ENTITIES
     // ==========================================================================
-    // DbSets will be added when entities are created
+    public DbSet<Activity> Activities { get; set; }
+    public DbSet<Participant> Participants { get; set; }
+    public DbSet<ActivityLog> ActivityLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,6 +100,50 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RewardProgramPolicy>()
             .Property(e => e.CalculationPeriod)
             .HasConversion<string>();
+
+        // ======================================================================
+        // ACTIVITY MODULE CONFIGURATIONS
+        // ======================================================================
+
+        // Activity -> Participants (1:N)
+        modelBuilder.Entity<Participant>()
+            .HasOne(p => p.Activity)
+            .WithMany(a => a.Participants)
+            .HasForeignKey(p => p.ActivityId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Participant -> ActivityLogs (1:N)
+        modelBuilder.Entity<ActivityLog>()
+            .HasOne(al => al.Participant)
+            .WithMany(p => p.ActivityLogs)
+            .HasForeignKey(al => al.ParticipantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Activity enum conversions
+        modelBuilder.Entity<HrManagement.Api.Modules.Activity.Domain.Entities.Activity>()
+            .Property(e => e.Type)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<HrManagement.Api.Modules.Activity.Domain.Entities.Activity>()
+            .Property(e => e.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Participant>()
+            .Property(e => e.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<ActivityLog>()
+            .Property(e => e.Status)
+            .HasConversion<string>();
+
+        // JsonDocument to string conversion for Activity.Config
+        // Required for SQLite compatibility (stores as TEXT)
+        modelBuilder.Entity<HrManagement.Api.Modules.Activity.Domain.Entities.Activity>()
+            .Property(e => e.Config)
+            .HasConversion(
+                v => v == null ? null : v.RootElement.GetRawText(),
+                v => v == null ? null : JsonDocument.Parse(v, default)
+            );
 
         // Apply all configurations from the current assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
