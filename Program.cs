@@ -121,6 +121,35 @@ builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.Point
 builder.Services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices.IUserWalletQueryService,
     HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices.UserWalletQueryServiceImpl>();
 
+// =============================================================================
+// DEPENDENCY INJECTION - ACTIVITY MODULE
+// =============================================================================
+
+// DAOs
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Dao.IActivityDao,
+    HrManagement.Api.Modules.Activity.Infrastructure.Dao.ActivityDao>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Dao.IParticipantDao,
+    HrManagement.Api.Modules.Activity.Infrastructure.Dao.ParticipantDao>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Dao.IActivityLogDao,
+    HrManagement.Api.Modules.Activity.Infrastructure.Dao.ActivityLogDao>();
+
+// Services
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Activity.IActivityQueryService,
+    HrManagement.Api.Modules.Activity.Domain.Services.Activity.ActivityQueryServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Activity.IActivityCommandService,
+    HrManagement.Api.Modules.Activity.Domain.Services.Activity.ActivityCommandServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.ActivityLog.IActivityLogQueryService,
+    HrManagement.Api.Modules.Activity.Domain.Services.ActivityLog.ActivityLogQueryServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.ActivityLog.IActivityLogCommandService,
+    HrManagement.Api.Modules.Activity.Domain.Services.ActivityLog.ActivityLogCommandServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Participant.IParticipantCommandService,
+    HrManagement.Api.Modules.Activity.Domain.Services.Participant.ParticipantCommandServiceImpl>();
+
+// Template Registry and Providers (Strategy Pattern)
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Template.IActivityConfigProvider,
+    HrManagement.Api.Modules.Activity.Domain.Services.Template.RunningSimpleConfigProvider>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Template.ActivityTemplateRegistry>();
+
 
 var app = builder.Build();
 
