@@ -40,11 +40,11 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(4, result.TotalItems);  // program-001, 002, 003, 004
-        Assert.Equal(4, result.Items.Count());
+        Assert.Equal(4, result.TotalElements);  // program-001, 002, 003, 004
+        Assert.Equal(4, result.Content.Count());
         Assert.Equal(1, result.TotalPages);
-        Assert.False(result.HasNextPage);
-        Assert.False(result.HasPreviousPage);
+        Assert.True(result.Last);  // No next page
+        Assert.True(result.First); // No previous page
     }
 
     [Fact]
@@ -64,10 +64,10 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(1, result.TotalItems);
-        Assert.Single(result.Items);
+        Assert.Equal(1, result.TotalElements);
+        Assert.Single(result.Content);
 
-        var items = result.Items.ToList();
+        var items = result.Content.ToList();
         Assert.Equal("Q4 2024 Employee Recognition", items[0].Name);
     }
 
@@ -88,10 +88,10 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(3, result.TotalItems);  // program-001, 003, 004 are ACTIVE
-        Assert.Equal(3, result.Items.Count());
+        Assert.Equal(3, result.TotalElements);  // program-001, 003, 004 are ACTIVE
+        Assert.Equal(3, result.Content.Count());
 
-        var items = result.Items.ToList();
+        var items = result.Content.ToList();
         Assert.All(items, p => Assert.Equal(ProgramStatus.ACTIVE, p.Status));
     }
 
@@ -112,10 +112,10 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(1, result.TotalItems);
-        Assert.Single(result.Items);
+        Assert.Equal(1, result.TotalElements);
+        Assert.Single(result.Content);
 
-        var items = result.Items.ToList();
+        var items = result.Content.ToList();
         Assert.Equal(ProgramStatus.INACTIVE, items[0].Status);
         Assert.Equal("program-002", items[0].RewardProgramId);
     }
@@ -136,11 +136,11 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(4, result.TotalItems);  // 4 total programs
-        Assert.Single(result.Items);
+        Assert.Equal(4, result.TotalElements);  // 4 total programs
+        Assert.Single(result.Content);
         Assert.Equal(4, result.TotalPages);
-        Assert.True(result.HasNextPage);
-        Assert.False(result.HasPreviousPage);
+        Assert.False(result.Last);  // Has next page
+        Assert.True(result.First);  // No previous page
     }
 
     [Fact]
@@ -159,10 +159,10 @@ public class RewardProgramQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(4, result.TotalItems);  // 4 total programs
-        Assert.Single(result.Items);
-        Assert.True(result.HasNextPage);  // Has page 3 and 4
-        Assert.True(result.HasPreviousPage);
+        Assert.Equal(4, result.TotalElements);  // 4 total programs
+        Assert.Single(result.Content);
+        Assert.False(result.Last);   // Has next page (page 3 and 4)
+        Assert.False(result.First);  // Has previous page
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class RewardProgramQueryServiceTests
         // Assert
         Assert.NotNull(result);
         // Find program-001 specifically for this test
-        var program = result.Items.First(p => p.RewardProgramId == "program-001");
+        var program = result.Content.First(p => p.RewardProgramId == "program-001");
 
         // Verify items are loaded (program-001 has 3 items: item-001, item-002, item-003)
         Assert.NotEmpty(program.RewardItems);

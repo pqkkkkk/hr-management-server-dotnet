@@ -34,7 +34,7 @@ public class ActivityLogQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(5, result.TotalItems); // 5 logs in seed data
+        Assert.Equal(5, result.TotalElements); // 5 logs in seed data
     }
 
     [Fact]
@@ -54,8 +54,8 @@ public class ActivityLogQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalItems); // log-002, log-005
-        Assert.All(result.Items, l => Assert.Equal(ActivityLogStatus.PENDING, l.Status));
+        Assert.Equal(2, result.TotalElements); // log-002, log-005
+        Assert.All(result.Content, l => Assert.Equal(ActivityLogStatus.PENDING, l.Status));
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class ActivityLogQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(5, result.TotalItems); // All logs are from activity-001
+        Assert.Equal(5, result.TotalElements); // All logs are from activity-001
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class ActivityLogQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalItems); // log-001, log-002 from participant-001
+        Assert.Equal(2, result.TotalElements); // log-001, log-002 from participant-001
     }
 
     [Fact]
@@ -114,10 +114,10 @@ public class ActivityLogQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(5, result.TotalItems);
-        Assert.Equal(2, result.Items.Count());
+        Assert.Equal(5, result.TotalElements);
+        Assert.Equal(2, result.Content.Count());
         Assert.Equal(3, result.TotalPages);
-        Assert.True(result.HasNextPage);
+        Assert.False(result.Last);  // Has next page
     }
 
     #endregion

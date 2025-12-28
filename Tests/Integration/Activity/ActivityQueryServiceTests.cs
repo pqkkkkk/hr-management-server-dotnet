@@ -69,7 +69,7 @@ public class ActivityQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(4, result.TotalItems); // activity-001, 002, 003, 004
+        Assert.Equal(4, result.TotalElements); // activity-001, 002, 003, 004
     }
 
     [Fact]
@@ -89,8 +89,8 @@ public class ActivityQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Single(result.Items);
-        Assert.Equal("activity-001", result.Items.First().ActivityId);
+        Assert.Single(result.Content);
+        Assert.Equal("activity-001", result.Content.First().ActivityId);
     }
 
     [Fact]
@@ -110,8 +110,8 @@ public class ActivityQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Single(result.Items);
-        Assert.Equal("activity-002", result.Items.First().ActivityId);
+        Assert.Single(result.Content);
+        Assert.Equal("activity-002", result.Content.First().ActivityId);
     }
 
     [Fact]
@@ -126,10 +126,10 @@ public class ActivityQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(4, result.TotalItems);
-        Assert.Equal(2, result.Items.Count());
+        Assert.Equal(4, result.TotalElements);
+        Assert.Equal(2, result.Content.Count());
         Assert.Equal(2, result.TotalPages);
-        Assert.True(result.HasNextPage);
+        Assert.False(result.Last);  // Has next page
     }
 
     #endregion
@@ -148,7 +148,7 @@ public class ActivityQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(2, result.TotalItems);
+        Assert.Equal(2, result.TotalElements);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class ActivityQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result.Items);
+        Assert.Empty(result.Content);
     }
 
     #endregion
