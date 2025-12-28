@@ -119,11 +119,11 @@ public class ActivityController : ControllerBase
 
         var result = await _activityQueryService.GetActivitiesAsync(filter);
 
-        var response = new PagedResult<ActivityResponse>(
-            result.Items.Select(ActivityResponse.FromEntity).ToList(),
-            result.TotalItems,
-            result.Page,
-            result.PageSize
+        var response = PagedResult<ActivityResponse>.Create(
+            result.Content.Select(ActivityResponse.FromEntity).ToList(),
+            result.TotalElements,
+            result.Number + 1,
+            result.Size
         );
 
         return Ok(ApiResponse<PagedResult<ActivityResponse>>.Ok(response));
@@ -151,11 +151,11 @@ public class ActivityController : ControllerBase
 
         var result = await _activityQueryService.GetMyActivitiesAsync(employeeId, filter);
 
-        var response = new PagedResult<ActivityResponse>(
-            result.Items.Select(ActivityResponse.FromEntity).ToList(),
-            result.TotalItems,
-            result.Page,
-            result.PageSize
+        var response = PagedResult<ActivityResponse>.Create(
+            result.Content.Select(ActivityResponse.FromEntity).ToList(),
+            result.TotalElements,
+            result.Number + 1, // Convert back to 1-indexed for Create method
+            result.Size
         );
 
         return Ok(ApiResponse<PagedResult<ActivityResponse>>.Ok(response));

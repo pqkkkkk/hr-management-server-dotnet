@@ -122,11 +122,11 @@ public class ActivityLogController : ControllerBase
 
         var result = await _activityLogQueryService.GetActivityLogsAsync(filter);
 
-        var response = new PagedResult<ActivityLogResponse>(
-            result.Items.Select(ActivityLogResponse.FromEntity).ToList(),
-            result.TotalItems,
-            result.Page,
-            result.PageSize
+        var response = PagedResult<ActivityLogResponse>.Create(
+            result.Content.Select(ActivityLogResponse.FromEntity).ToList(),
+            result.TotalElements,
+            result.Number + 1,
+            result.Size
         );
 
         return Ok(ApiResponse<PagedResult<ActivityLogResponse>>.Ok(response));

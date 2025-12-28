@@ -46,8 +46,8 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(15, result.TotalItems);
-        Assert.Equal(15, result.Items.Count());
+        Assert.Equal(15, result.TotalElements);
+        Assert.Equal(15, result.Content.Count());
     }
 
     #endregion
@@ -74,10 +74,10 @@ public class PointTransactionQueryServiceTests
         // Assert
         Assert.NotNull(result);
         // employee-001 receives: tx-001, tx-004, tx-006, tx-007, tx-009, tx-012, tx-015 = 7 transactions
-        Assert.Equal(7, result.TotalItems);
+        Assert.Equal(7, result.TotalElements);
 
         // Verify all transactions involve employee-001's wallet
-        foreach (var tx in result.Items)
+        foreach (var tx in result.Content)
         {
             var involvesEmployee =
                 (tx.SourceWallet?.UserId == "employee-001") ||
@@ -112,10 +112,10 @@ public class PointTransactionQueryServiceTests
         // Assert
         Assert.NotNull(result);
         // Verify transactions are filtered (at least 5, depending on time comparison)
-        Assert.True(result.TotalItems >= 5 && result.TotalItems <= 6);
+        Assert.True(result.TotalElements >= 5 && result.TotalElements <= 6);
 
         // Verify all returned transactions are within date range
-        foreach (var tx in result.Items)
+        foreach (var tx in result.Content)
         {
             Assert.True(tx.CreatedAt >= filter.FromDate);
             Assert.True(tx.CreatedAt <= filter.ToDate);
@@ -140,7 +140,7 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(4, result.TotalItems);
+        Assert.Equal(4, result.TotalElements);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class PointTransactionQueryServiceTests
         // Assert
         Assert.NotNull(result);
         // Verify transactions are filtered (less than total 15)
-        Assert.True(result.TotalItems >= 3 && result.TotalItems <= 4);
+        Assert.True(result.TotalElements >= 3 && result.TotalElements <= 4);
     }
 
     #endregion
@@ -188,8 +188,8 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(9, result.TotalItems);
-        Assert.All(result.Items, tx => Assert.Equal(TransactionType.GIFT, tx.Type));
+        Assert.Equal(9, result.TotalElements);
+        Assert.All(result.Content, tx => Assert.Equal(TransactionType.GIFT, tx.Type));
     }
 
     [Fact]
@@ -210,8 +210,8 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(3, result.TotalItems);
-        Assert.All(result.Items, tx => Assert.Equal(TransactionType.EXCHANGE, tx.Type));
+        Assert.Equal(3, result.TotalElements);
+        Assert.All(result.Content, tx => Assert.Equal(TransactionType.EXCHANGE, tx.Type));
     }
 
     [Fact]
@@ -232,8 +232,8 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(3, result.TotalItems);
-        Assert.All(result.Items, tx => Assert.Equal(TransactionType.POLICY_REWARD, tx.Type));
+        Assert.Equal(3, result.TotalElements);
+        Assert.All(result.Content, tx => Assert.Equal(TransactionType.POLICY_REWARD, tx.Type));
     }
 
     #endregion
@@ -256,11 +256,11 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(15, result.TotalItems);
-        Assert.Equal(5, result.Items.Count());
+        Assert.Equal(15, result.TotalElements);
+        Assert.Equal(5, result.Content.Count());
         Assert.Equal(3, result.TotalPages);
-        Assert.True(result.HasNextPage);
-        Assert.False(result.HasPreviousPage);
+        Assert.False(result.Last);  // Has next page
+        Assert.True(result.First);  // No previous page
     }
 
     [Fact]
@@ -279,10 +279,10 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(15, result.TotalItems);
-        Assert.Equal(5, result.Items.Count());
-        Assert.True(result.HasNextPage);
-        Assert.True(result.HasPreviousPage);
+        Assert.Equal(15, result.TotalElements);
+        Assert.Equal(5, result.Content.Count());
+        Assert.False(result.Last);   // Has next page
+        Assert.False(result.First);  // Has previous page
     }
 
     [Fact]
@@ -301,10 +301,10 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(15, result.TotalItems);
-        Assert.Equal(5, result.Items.Count()); // 15 total, page 3 with size 5 = last 5
-        Assert.False(result.HasNextPage);
-        Assert.True(result.HasPreviousPage);
+        Assert.Equal(15, result.TotalElements);
+        Assert.Equal(5, result.Content.Count()); // 15 total, page 3 with size 5 = last 5
+        Assert.True(result.Last);   // No next page
+        Assert.False(result.First); // Has previous page
     }
 
     #endregion
@@ -331,8 +331,8 @@ public class PointTransactionQueryServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(5, result.TotalItems);
-        Assert.All(result.Items, tx =>
+        Assert.Equal(5, result.TotalElements);
+        Assert.All(result.Content, tx =>
         {
             Assert.Equal(TransactionType.GIFT, tx.Type);
             Assert.True(tx.CreatedAt >= filter.FromDate);

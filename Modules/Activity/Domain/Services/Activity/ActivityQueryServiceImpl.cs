@@ -57,7 +57,7 @@ public class ActivityQueryServiceImpl : IActivityQueryService
         var logs = await _activityLogDao.GetAllAsync(new ActivityLogFilter { ActivityId = activityId, PageSize = int.MaxValue });
 
         var participantList = participants.ToList();
-        var logList = logs.Items.ToList();
+        var logList = logs.Content.ToList();
 
         var totalDistance = logList
             .Where(l => l.Status == ActivityLogStatus.APPROVED)

@@ -120,11 +120,11 @@ public class RewardProgramController : ControllerBase
 
         var result = await _rewardProgramQueryService.GetRewardProgramsAsync(filter);
 
-        var response = new PagedResult<RewardProgramResponse>(
-            result.Items.Select(RewardProgramResponse.FromEntity).ToList(),
-            result.TotalItems,
-            result.Page,
-            result.PageSize
+        var response = PagedResult<RewardProgramResponse>.Create(
+            result.Content.Select(RewardProgramResponse.FromEntity).ToList(),
+            result.TotalElements,
+            result.Number + 1,
+            result.Size
         );
 
         return Ok(ApiResponse<PagedResult<RewardProgramResponse>>.Ok(response));

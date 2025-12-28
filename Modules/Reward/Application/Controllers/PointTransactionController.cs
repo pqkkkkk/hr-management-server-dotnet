@@ -47,13 +47,13 @@ public class PointTransactionController : ControllerBase
     {
         var result = await _pointTransactionQueryService.GetPointTransactionsAsync(filter);
 
-        var dtoItems = result.Items.Select(item => PointTransactionDetailResponse.FromEntity(item)).ToList();
+        var dtoItems = result.Content.Select(item => PointTransactionDetailResponse.FromEntity(item)).ToList();
 
-        var pagedResult = new PagedResult<PointTransactionDetailResponse>(
+        var pagedResult = PagedResult<PointTransactionDetailResponse>.Create(
             dtoItems,
-            result.TotalItems,
-            result.Page,
-            result.PageSize
+            result.TotalElements,
+            result.Number + 1,
+            result.Size
         );
         return Ok(ApiResponse<PagedResult<PointTransactionDetailResponse>>.Ok(pagedResult));
     }
