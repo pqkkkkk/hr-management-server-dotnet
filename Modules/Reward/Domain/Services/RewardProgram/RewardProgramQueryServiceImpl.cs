@@ -34,4 +34,13 @@ public class RewardProgramQueryServiceImpl : IRewardProgramQueryService
     {
         return await _rewardProgramDao.GetAllAsync(filter);
     }
+
+    /// <summary>
+    /// Gets the currently active reward program.
+    /// According to business rules, only one program can be active at a time.
+    /// </summary>
+    public async Task<RewardProgram?> GetActiveRewardProgramAsync()
+    {
+        return await _rewardProgramDao.GetActiveAsync();
+    }
 }

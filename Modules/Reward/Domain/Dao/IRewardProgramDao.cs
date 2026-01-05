@@ -33,4 +33,10 @@ public interface IRewardProgramDao
     /// Deletes a reward program by ID.
     /// </summary>
     Task DeleteAsync(string id);
+
+    /// <summary>
+    /// Gets the currently active reward program.
+    /// According to business rules, only one program can be active at a time.
+    /// </summary>
+    Task<RewardProgram?> GetActiveAsync();
 }
