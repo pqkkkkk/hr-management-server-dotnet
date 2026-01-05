@@ -127,4 +127,16 @@ public class RewardProgramDao : IRewardProgramDao
             await _context.SaveChangesAsync();
         }
     }
+
+    /// <summary>
+    /// Gets the currently active reward program.
+    /// According to business rules, only one program can be active at a time.
+    /// </summary>
+    public async Task<RewardProgram?> GetActiveAsync()
+    {
+        return await _context.RewardPrograms
+            .Include(p => p.RewardItems)
+            .Include(p => p.Policies)
+            .FirstOrDefaultAsync(p => p.Status == ProgramStatus.ACTIVE);
+    }
 }

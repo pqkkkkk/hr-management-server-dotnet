@@ -88,11 +88,11 @@ public record ExchangePointsRequest
     public string ProgramId { get; init; } = string.Empty;
 
     /// <summary>
-    /// User ID of the employee exchanging points.
+    /// User wallet ID of the employee exchanging points.
     /// </summary>
-    /// <example>employee-456</example>
+    /// <example>wallet-456</example>
     [Required]
-    public string UserId { get; init; } = string.Empty;
+    public string UserWalletId { get; init; } = string.Empty;
 
     /// <summary>
     /// List of items to exchange with quantities.
@@ -110,8 +110,8 @@ public record ExchangePointsRequest
         return new PointTransaction
         {
             Type = TransactionType.EXCHANGE,
-            DestinationWalletId = UserId,
-            SourceWalletId = UserId,
+            DestinationWalletId = UserWalletId,
+            SourceWalletId = UserWalletId,
             Items = Items.Select(i => i.ToEntity()).ToList()
         };
     }

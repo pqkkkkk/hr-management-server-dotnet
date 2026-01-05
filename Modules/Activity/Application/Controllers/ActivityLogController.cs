@@ -155,7 +155,7 @@ public class ActivityLogController : ControllerBase
     /// <param name="id">The activity log ID.</param>
     /// <param name="reviewerId">The reviewer's employee ID.</param>
     /// <returns>The approved activity log.</returns>
-    [HttpPost("{id}/approve")]
+    [HttpPatch("{id}/approve")]
     [ProducesResponseType(typeof(ApiResponse<ActivityLogResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -175,7 +175,7 @@ public class ActivityLogController : ControllerBase
     /// <param name="reviewerId">The reviewer's employee ID.</param>
     /// <param name="request">The rejection request with reason.</param>
     /// <returns>The rejected activity log.</returns>
-    [HttpPost("{id}/reject")]
+    [HttpPatch("{id}/reject")]
     [ProducesResponseType(typeof(ApiResponse<ActivityLogResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

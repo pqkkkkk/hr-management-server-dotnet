@@ -68,6 +68,32 @@ public class RewardProgramController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the currently active reward program.
+    /// </summary>
+    /// <remarks>
+    /// According to business rules, only one reward program can be active at a time.
+    /// This endpoint returns the active program with all its details including items and policies.
+    /// </remarks>
+    /// <returns>The active reward program with all details.</returns>
+    /// <response code="200">Returns the active reward program details.</response>
+    /// <response code="404">If no active reward program exists.</response>
+    [HttpGet("active")]
+    [ProducesResponseType(typeof(ApiResponse<RewardProgramDetailResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetActiveRewardProgram()
+    {
+        var rewardProgram = await _rewardProgramQueryService.GetActiveRewardProgramAsync();
+
+        if (rewardProgram == null)
+        {
+            throw new KeyNotFoundException("No active reward program found.");
+        }
+
+        var response = RewardProgramDetailResponse.FromEntity(rewardProgram);
+        return Ok(ApiResponse<RewardProgramDetailResponse>.Ok(response));
+    }
+
+    /// <summary>
     /// Gets a reward program by ID with its items and policies.
     /// </summary>
     /// <remarks>
