@@ -31,6 +31,7 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
     /// <summary>
     /// Creates a new reward program with its items and policies.
     /// Also auto-creates wallets for all users in the system.
+    /// Business rule: Only one reward program can be active at a time.
     /// </summary>
     public async Task<RewardProgram> CreateRewardProgramAsync(RewardProgram program)
     {
@@ -38,6 +39,10 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
         try
         {
             ValidateRewardProgram(program);
+            
+            // Deactivate all existing active programs before creating new one
+            await DeactivateAllActiveProgramsAsync();
+            
             PrepareRewardProgram(program);
 
             // Save the reward program (cascade saves items and policies)
@@ -54,6 +59,29 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+    
+    /// <summary>
+    /// Deactivates all currently active reward programs.
+    /// Business rule: Only one reward program can be active at a time.
+    /// </summary>
+    private async Task DeactivateAllActiveProgramsAsync()
+    {
+        var activePrograms = await _dbContext.RewardPrograms
+            .Where(p => p.Status == ProgramStatus.ACTIVE)
+            .Include(p => p.Policies)
+            .ToListAsync();
+
+        foreach (var program in activePrograms)
+        {
+            program.Status = ProgramStatus.INACTIVE;
+            foreach (var policy in program.Policies)
+            {
+                policy.IsActive = false;
+            }
+        }
+        
+        // Changes will be saved as part of the transaction in CreateRewardProgramAsync
     }
 
     private void ValidateRewardProgram(RewardProgram program)

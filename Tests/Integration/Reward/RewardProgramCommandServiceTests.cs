@@ -175,6 +175,75 @@ public class RewardProgramCommandServiceTests
             () => service.CreateRewardProgramAsync(program));
     }
 
+    [Fact]
+    public async Task CreateRewardProgram_DeactivatesExistingActivePrograms()
+    {
+        // Arrange
+        var commandService = _fixture.GetService<IRewardProgramCommandService>();
+        var dbContext = _fixture.CreateDbContext();
+
+        // First create an active program
+        var firstProgram = new RewardProgram
+        {
+            Name = "First Active Program",
+            Description = "This should be deactivated when second is created",
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 6, 30),
+            DefaultGivingBudget = 50,
+            RewardItems = new List<RewardItem>
+            {
+                new RewardItem { Name = "First Item", RequiredPoints = 100, Quantity = 10 }
+            },
+            Policies = new List<RewardProgramPolicy>
+            {
+                new RewardProgramPolicy
+                {
+                    PolicyType = PolicyType.OVERTIME,
+                    CalculationPeriod = CalculationPeriod.WEEKLY,
+                    UnitValue = 10,
+                    PointsPerUnit = 5
+                }
+            }
+        };
+        var createdFirst = await commandService.CreateRewardProgramAsync(firstProgram);
+        Assert.Equal(ProgramStatus.ACTIVE, createdFirst.Status);
+
+        // Act - Create second program (should deactivate first)
+        var secondProgram = new RewardProgram
+        {
+            Name = "Second Active Program",
+            Description = "This should become the only active program",
+            StartDate = new DateTime(2025, 7, 1),
+            EndDate = new DateTime(2025, 12, 31),
+            DefaultGivingBudget = 75,
+            RewardItems = new List<RewardItem>
+            {
+                new RewardItem { Name = "Second Item", RequiredPoints = 150, Quantity = 5 }
+            },
+            Policies = new List<RewardProgramPolicy>
+            {
+                new RewardProgramPolicy
+                {
+                    PolicyType = PolicyType.NOT_LATE,
+                    CalculationPeriod = CalculationPeriod.WEEKLY,
+                    UnitValue = 1,
+                    PointsPerUnit = 10
+                }
+            }
+        };
+        var createdSecond = await commandService.CreateRewardProgramAsync(secondProgram);
+
+        // Assert - Second program should be active
+        Assert.Equal(ProgramStatus.ACTIVE, createdSecond.Status);
+
+        // First program should now be inactive
+        var freshContext = _fixture.CreateDbContext();
+        var updatedFirst = await freshContext.RewardPrograms
+            .FindAsync(createdFirst.RewardProgramId);
+        Assert.NotNull(updatedFirst);
+        Assert.Equal(ProgramStatus.INACTIVE, updatedFirst.Status);
+    }
+
     #endregion
 
     #region DeactivateRewardProgramAsync Tests

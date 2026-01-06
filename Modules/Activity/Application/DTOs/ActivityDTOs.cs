@@ -150,6 +150,12 @@ public record RegisterParticipantRequest
     /// </summary>
     [Required]
     public string EmployeeId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Employee name for display purposes.
+    /// </summary>
+    [StringLength(255)]
+    public string EmployeeName { get; init; } = string.Empty;
 }
 
 #endregion
@@ -173,9 +179,19 @@ public record ActivityResponse
     public DateTime CreatedAt { get; init; }
 
     /// <summary>
+    /// Number of participants in this activity.
+    /// </summary>
+    public int ParticipantsCount { get; init; }
+
+    /// <summary>
+    /// Whether the current user is registered for this activity.
+    /// </summary>
+    public bool IsRegistered { get; init; }
+
+    /// <summary>
     /// Creates a response from an Activity entity.
     /// </summary>
-    public static ActivityResponse FromEntity(Domain.Entities.Activity entity)
+    public static ActivityResponse FromEntity(Domain.Entities.Activity entity, string? employeeId = null)
     {
         return new ActivityResponse
         {
@@ -188,7 +204,10 @@ public record ActivityResponse
             StartDate = entity.StartDate,
             EndDate = entity.EndDate,
             Status = entity.Status,
-            CreatedAt = entity.CreatedAt
+            CreatedAt = entity.CreatedAt,
+            ParticipantsCount = entity.ParticipantsCount,
+            IsRegistered = !string.IsNullOrEmpty(employeeId) &&
+                           entity.Participants?.Any(p => p.EmployeeId == employeeId) == true
         };
     }
 }
@@ -199,12 +218,11 @@ public record ActivityResponse
 public record ActivityDetailResponse : ActivityResponse
 {
     public Dictionary<string, object>? Config { get; init; }
-    public int ParticipantsCount { get; init; }
 
     /// <summary>
     /// Creates a detail response from an Activity entity.
     /// </summary>
-    public static new ActivityDetailResponse FromEntity(Domain.Entities.Activity entity)
+    public static new ActivityDetailResponse FromEntity(Domain.Entities.Activity entity, string? employeeId = null)
     {
         Dictionary<string, object>? configDict = null;
         if (entity.Config != null)
@@ -225,7 +243,9 @@ public record ActivityDetailResponse : ActivityResponse
             Status = entity.Status,
             CreatedAt = entity.CreatedAt,
             Config = configDict,
-            ParticipantsCount = entity.Participants?.Count ?? 0
+            ParticipantsCount = entity.ParticipantsCount,
+            IsRegistered = !string.IsNullOrEmpty(employeeId) &&
+                           entity.Participants?.Any(p => p.EmployeeId == employeeId) == true
         };
     }
 }
@@ -238,6 +258,7 @@ public record ParticipantResponse
     public string ParticipantId { get; init; } = string.Empty;
     public string ActivityId { get; init; } = string.Empty;
     public string EmployeeId { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
     public DateTime JoinedAt { get; init; }
     public ParticipantStatus Status { get; init; }
     public decimal TotalScore { get; init; }
@@ -252,9 +273,73 @@ public record ParticipantResponse
             ParticipantId = entity.ParticipantId,
             ActivityId = entity.ActivityId,
             EmployeeId = entity.EmployeeId,
+            EmployeeName = entity.EmployeeName,
             JoinedAt = entity.JoinedAt,
             Status = entity.Status,
             TotalScore = entity.TotalScore
+        };
+    }
+}
+
+/// <summary>
+/// Response DTO for participant statistics.
+/// </summary>
+public record ParticipantStatsResponse
+{
+    public string ParticipantId { get; init; } = string.Empty;
+    public string ActivityId { get; init; } = string.Empty;
+    public string EmployeeId { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
+    public DateTime JoinedAt { get; init; }
+    public ParticipantStatus Status { get; init; }
+    public decimal TotalScore { get; init; }
+
+    /// <summary>
+    /// Total distance in kilometers from approved activity logs.
+    /// </summary>
+    public decimal TotalDistanceKm { get; init; }
+
+    /// <summary>
+    /// Total number of activity log submissions (all statuses).
+    /// </summary>
+    public int TotalSubmissions { get; init; }
+
+    /// <summary>
+    /// Number of approved activity log submissions.
+    /// </summary>
+    public int ApprovedSubmissions { get; init; }
+
+    /// <summary>
+    /// Number of pending activity log submissions.
+    /// </summary>
+    public int PendingSubmissions { get; init; }
+
+    /// <summary>
+    /// Number of rejected activity log submissions.
+    /// </summary>
+    public int RejectedSubmissions { get; init; }
+
+    /// <summary>
+    /// Creates a response from a Participant entity with activity logs.
+    /// </summary>
+    public static ParticipantStatsResponse FromEntity(Participant entity)
+    {
+        var logs = entity.ActivityLogs?.ToList() ?? new List<ActivityLog>();
+
+        return new ParticipantStatsResponse
+        {
+            ParticipantId = entity.ParticipantId,
+            ActivityId = entity.ActivityId,
+            EmployeeId = entity.EmployeeId,
+            EmployeeName = entity.EmployeeName,
+            JoinedAt = entity.JoinedAt,
+            Status = entity.Status,
+            TotalScore = entity.TotalScore,
+            TotalDistanceKm = logs.Where(l => l.Status == ActivityLogStatus.APPROVED).Sum(l => l.Distance),
+            TotalSubmissions = logs.Count,
+            ApprovedSubmissions = logs.Count(l => l.Status == ActivityLogStatus.APPROVED),
+            PendingSubmissions = logs.Count(l => l.Status == ActivityLogStatus.PENDING),
+            RejectedSubmissions = logs.Count(l => l.Status == ActivityLogStatus.REJECTED)
         };
     }
 }
@@ -266,6 +351,7 @@ public record LeaderboardEntryResponse
 {
     public int Rank { get; init; }
     public string EmployeeId { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
     public decimal TotalScore { get; init; }
     public string ParticipantId { get; init; } = string.Empty;
 
@@ -278,6 +364,7 @@ public record LeaderboardEntryResponse
         {
             Rank = rank,
             EmployeeId = entity.EmployeeId,
+            EmployeeName = entity.EmployeeName,
             TotalScore = entity.TotalScore,
             ParticipantId = entity.ParticipantId
         };

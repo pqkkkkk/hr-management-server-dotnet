@@ -62,4 +62,15 @@ public class Activity
 
     // Navigation properties
     public virtual ICollection<Participant> Participants { get; set; } = new List<Participant>();
+
+    #region Computed Properties (Not Mapped to DB)
+
+    /// <summary>
+    /// Number of participants in this activity.
+    /// Computed from Participants navigation property.
+    /// </summary>
+    [NotMapped]
+    public int ParticipantsCount => Participants?.Count ?? 0;
+
+    #endregion
 }

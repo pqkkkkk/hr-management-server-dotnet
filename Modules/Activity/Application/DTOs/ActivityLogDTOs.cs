@@ -24,6 +24,13 @@ public record SubmitActivityLogRequest
     public string EmployeeId { get; init; } = string.Empty;
 
     /// <summary>
+    /// Employee name for display purposes.
+    /// </summary>
+    [Required]
+    [StringLength(255)]
+    public string EmployeeName { get; init; } = string.Empty;
+
+    /// <summary>
     /// Distance covered in kilometers.
     /// </summary>
     /// <example>5.5</example>
@@ -61,6 +68,7 @@ public record SubmitActivityLogRequest
         return new ActivityLog
         {
             ParticipantId = participantId,
+            EmployeeName = EmployeeName,
             Distance = Distance,
             DurationMinutes = DurationMinutes,
             ProofUrl = ProofUrl,
@@ -96,6 +104,7 @@ public record ActivityLogResponse
     public string ActivityLogId { get; init; } = string.Empty;
     public string ParticipantId { get; init; } = string.Empty;
     public string? EmployeeId { get; init; }
+    public string EmployeeName { get; init; } = string.Empty;
     public string? ActivityId { get; init; }
     public decimal Distance { get; init; }
     public int DurationMinutes { get; init; }
@@ -121,6 +130,7 @@ public record ActivityLogResponse
             ActivityLogId = entity.ActivityLogId,
             ParticipantId = entity.ParticipantId,
             EmployeeId = entity.Participant?.EmployeeId,
+            EmployeeName = entity.EmployeeName,
             ActivityId = entity.Participant?.ActivityId,
             Distance = entity.Distance,
             DurationMinutes = entity.DurationMinutes,

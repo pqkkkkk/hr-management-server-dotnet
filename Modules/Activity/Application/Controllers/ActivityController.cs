@@ -79,11 +79,11 @@ public class ActivityController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<ActivityDetailResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetActivityById([FromRoute] string id)
+    public async Task<IActionResult> GetActivityById([FromRoute] string id, [FromQuery] string? employeeId = null)
     {
         var activity = await _activityQueryService.GetActivityByIdAsync(id)
             ?? throw new KeyNotFoundException($"Activity with ID {id} not found.");
-        var response = ActivityDetailResponse.FromEntity(activity);
+        var response = ActivityDetailResponse.FromEntity(activity, employeeId);
         return Ok(ApiResponse<ActivityDetailResponse>.Ok(response));
     }
 
@@ -96,6 +96,7 @@ public class ActivityController : ControllerBase
     /// <param name="type">Filter by activity type.</param>
     /// <param name="status">Filter by status.</param>
     /// <param name="isActive">Filter by active/inactive status.</param>
+    /// <param name="employeeId">Optional employee ID to check registration status.</param>
     /// <returns>Paginated list of activities.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<ActivityResponse>>), StatusCodes.Status200OK)]
@@ -105,7 +106,8 @@ public class ActivityController : ControllerBase
         [FromQuery] string? nameContains = null,
         [FromQuery] ActivityType? type = null,
         [FromQuery] ActivityStatus? status = null,
-        [FromQuery] bool? isActive = null)
+        [FromQuery] bool? isActive = null,
+        [FromQuery] string? employeeId = null)
     {
         var filter = new ActivityFilter
         {
@@ -120,7 +122,7 @@ public class ActivityController : ControllerBase
         var result = await _activityQueryService.GetActivitiesAsync(filter);
 
         var response = PagedResult<ActivityResponse>.Create(
-            result.Content.Select(ActivityResponse.FromEntity).ToList(),
+            result.Content.Select(a => ActivityResponse.FromEntity(a, employeeId)).ToList(),
             result.TotalElements,
             result.Number + 1,
             result.Size
@@ -152,7 +154,7 @@ public class ActivityController : ControllerBase
         var result = await _activityQueryService.GetMyActivitiesAsync(employeeId, filter);
 
         var response = PagedResult<ActivityResponse>.Create(
-            result.Content.Select(ActivityResponse.FromEntity).ToList(),
+            result.Content.Select(a => ActivityResponse.FromEntity(a, employeeId)).ToList(),
             result.TotalElements,
             result.Number + 1, // Convert back to 1-indexed for Create method
             result.Size
@@ -192,7 +194,7 @@ public class ActivityController : ControllerBase
     public async Task<IActionResult> DeleteActivity([FromRoute] string id)
     {
         await _activityCommandService.DeleteActivityAsync(id);
-        return NoContent();
+        return Ok(ApiResponse<object>.Ok(null, "Activity closed successfully"));
     }
 
     /// <summary>
@@ -217,7 +219,7 @@ public class ActivityController : ControllerBase
     /// Registers an employee to an activity.
     /// </summary>
     /// <param name="id">The activity ID.</param>
-    /// <param name="employeeId">The employee ID to register.</param>
+    /// <param name="request">The registration request containing employee details.</param>
     /// <returns>The created participant.</returns>
     [HttpPost("{id}/register")]
     [ProducesResponseType(typeof(ApiResponse<ParticipantResponse>), StatusCodes.Status201Created)]
@@ -225,9 +227,9 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RegisterParticipant(
         [FromRoute] string id,
-        [FromQuery] string employeeId)
+        [FromBody] RegisterParticipantRequest request)
     {
-        var participant = await _participantCommandService.RegisterParticipantAsync(id, employeeId);
+        var participant = await _participantCommandService.RegisterParticipantAsync(id, request.EmployeeId, request.EmployeeName);
         var response = ParticipantResponse.FromEntity(participant);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<ParticipantResponse>.Created(response));
     }

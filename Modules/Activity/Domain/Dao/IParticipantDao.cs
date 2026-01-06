@@ -44,4 +44,9 @@ public interface IParticipantDao
     /// Gets leaderboard for an activity (top participants by score).
     /// </summary>
     Task<IEnumerable<Entities.Participant>> GetLeaderboardAsync(string activityId, int top = 10);
+
+    /// <summary>
+    /// Gets a participant by activity ID and employee ID with activity logs for statistics.
+    /// </summary>
+    Task<Entities.Participant?> GetByActivityAndEmployeeWithStatsAsync(string activityId, string employeeId);
 }

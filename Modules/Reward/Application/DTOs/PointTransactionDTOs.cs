@@ -164,6 +164,8 @@ public record PointTransactionResponse
     public float Amount { get; init; }
     public string? SourceWalletId { get; init; }
     public string? DestinationWalletId { get; init; }
+    public string? SourceUsername { get; init; }
+    public string? DestinationUsername { get; init; }
     public DateTime CreatedAt { get; init; }
 
     /// <summary>
@@ -178,6 +180,8 @@ public record PointTransactionResponse
             Amount = entity.Amount,
             SourceWalletId = entity.SourceWalletId,
             DestinationWalletId = entity.DestinationWalletId,
+            SourceUsername = entity.SourceWallet?.UserName,
+            DestinationUsername = entity.DestinationWallet?.UserName,
             CreatedAt = entity.CreatedAt
         };
     }
@@ -202,6 +206,8 @@ public record PointTransactionDetailResponse : PointTransactionResponse
             Amount = entity.Amount,
             SourceWalletId = entity.SourceWalletId,
             DestinationWalletId = entity.DestinationWalletId,
+            SourceUsername = entity.SourceWallet?.UserName,
+            DestinationUsername = entity.DestinationWallet?.UserName,
             CreatedAt = entity.CreatedAt,
             Items = entity.Items.Select(ItemInTransactionResponse.FromEntity).ToList()
         };

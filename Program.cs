@@ -144,6 +144,8 @@ builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Act
     HrManagement.Api.Modules.Activity.Domain.Services.ActivityLog.ActivityLogCommandServiceImpl>();
 builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Participant.IParticipantCommandService,
     HrManagement.Api.Modules.Activity.Domain.Services.Participant.ParticipantCommandServiceImpl>();
+builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Participant.IParticipantQueryService,
+    HrManagement.Api.Modules.Activity.Domain.Services.Participant.ParticipantQueryServiceImpl>();
 
 // Template Registry and Providers (Strategy Pattern)
 builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Template.IActivityConfigProvider,

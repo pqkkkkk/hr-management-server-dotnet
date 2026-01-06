@@ -8,7 +8,7 @@ public interface IParticipantCommandService
     /// <summary>
     /// Registers an employee to an activity.
     /// </summary>
-    Task<Entities.Participant> RegisterParticipantAsync(string activityId, string employeeId);
+    Task<Entities.Participant> RegisterParticipantAsync(string activityId, string employeeId, string employeeName);
 
     /// <summary>
     /// Removes a participant from an activity.

@@ -21,6 +21,13 @@ public class ActivityLog
     public string ParticipantId { get; set; } = string.Empty;
 
     /// <summary>
+    /// Employee name for display purposes.
+    /// </summary>
+    [Column("employee_name")]
+    [StringLength(255)]
+    public string EmployeeName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Distance in kilometers (for running activities)
     /// </summary>
     [Column("distance")]
