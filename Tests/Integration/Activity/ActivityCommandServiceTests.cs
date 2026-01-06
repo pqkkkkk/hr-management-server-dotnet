@@ -191,22 +191,41 @@ public class ActivityCommandServiceTests
 
     #endregion
 
-    #region DeleteActivityAsync Tests
+    #region DeleteActivityAsync Tests (Soft Delete)
 
     [Fact]
-    public async Task DeleteActivityAsync_ExistingActivity_DeletesSuccessfully()
+    public async Task DeleteActivityAsync_ExistingActivity_SoftDeletesSuccessfully()
     {
         // Arrange
         var service = _fixture.GetService<IActivityCommandService>();
-        // activity-004 is DRAFT and safe to delete
+
+        // Create a new activity to test delete
+        var config = JsonDocument.Parse(@"{
+            ""min_pace"": 4.0,
+            ""max_pace"": 15.0,
+            ""min_distance_per_log"": 1.0,
+            ""max_distance_per_day"": 42.0,
+            ""points_per_km"": 10,
+            ""bonus_weekend_multiplier"": 1.5
+        }");
+
+        var activity = await service.CreateActivityAsync(new HrManagement.Api.Modules.Activity.Domain.Entities.Activity
+        {
+            Name = "Test Activity - Soft Delete Test",
+            TemplateId = "RUNNING_SIMPLE",
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 12, 31),
+            Config = config
+        });
 
         // Act
-        await service.DeleteActivityAsync("activity-004");
+        await service.DeleteActivityAsync(activity.ActivityId);
 
-        // Assert
+        // Assert - Activity should still exist but with DELETED status
         var dbContext = _fixture.CreateDbContext();
-        var deleted = await dbContext.Activities.FindAsync("activity-004");
-        Assert.Null(deleted);
+        var deleted = await dbContext.Activities.FindAsync(activity.ActivityId);
+        Assert.NotNull(deleted); // Record still exists
+        Assert.Equal(ActivityStatus.CLOSED, deleted.Status); // But status is CLOSED
     }
 
     [Fact]
@@ -218,6 +237,43 @@ public class ActivityCommandServiceTests
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(
             () => service.DeleteActivityAsync("non-existing-id"));
+    }
+
+    [Fact]
+    public async Task DeleteActivityAsync_AlreadyDeleted_ChangesStatusAgain()
+    {
+        // Arrange
+        var service = _fixture.GetService<IActivityCommandService>();
+
+        // Create and delete an activity
+        var config = JsonDocument.Parse(@"{
+            ""min_pace"": 4.0,
+            ""max_pace"": 15.0,
+            ""min_distance_per_log"": 1.0,
+            ""max_distance_per_day"": 42.0,
+            ""points_per_km"": 10,
+            ""bonus_weekend_multiplier"": 1.5
+        }");
+
+        var activity = await service.CreateActivityAsync(new HrManagement.Api.Modules.Activity.Domain.Entities.Activity
+        {
+            Name = "Test Activity - Double Delete Test",
+            TemplateId = "RUNNING_SIMPLE",
+            StartDate = new DateTime(2025, 1, 1),
+            EndDate = new DateTime(2025, 12, 31),
+            Config = config
+        });
+
+        await service.DeleteActivityAsync(activity.ActivityId);
+
+        // Act - Delete again (should not throw)
+        await service.DeleteActivityAsync(activity.ActivityId);
+
+        // Assert - Status is still DELETED
+        var dbContext = _fixture.CreateDbContext();
+        var deleted = await dbContext.Activities.FindAsync(activity.ActivityId);
+        Assert.NotNull(deleted);
+        Assert.Equal(ActivityStatus.CLOSED, deleted.Status);
     }
 
     #endregion

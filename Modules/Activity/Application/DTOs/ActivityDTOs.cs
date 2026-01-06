@@ -179,9 +179,19 @@ public record ActivityResponse
     public DateTime CreatedAt { get; init; }
 
     /// <summary>
+    /// Number of participants in this activity.
+    /// </summary>
+    public int ParticipantsCount { get; init; }
+
+    /// <summary>
+    /// Whether the current user is registered for this activity.
+    /// </summary>
+    public bool IsRegistered { get; init; }
+
+    /// <summary>
     /// Creates a response from an Activity entity.
     /// </summary>
-    public static ActivityResponse FromEntity(Domain.Entities.Activity entity)
+    public static ActivityResponse FromEntity(Domain.Entities.Activity entity, string? employeeId = null)
     {
         return new ActivityResponse
         {
@@ -194,7 +204,10 @@ public record ActivityResponse
             StartDate = entity.StartDate,
             EndDate = entity.EndDate,
             Status = entity.Status,
-            CreatedAt = entity.CreatedAt
+            CreatedAt = entity.CreatedAt,
+            ParticipantsCount = entity.ParticipantsCount,
+            IsRegistered = !string.IsNullOrEmpty(employeeId) &&
+                           entity.Participants?.Any(p => p.EmployeeId == employeeId) == true
         };
     }
 }
@@ -205,12 +218,11 @@ public record ActivityResponse
 public record ActivityDetailResponse : ActivityResponse
 {
     public Dictionary<string, object>? Config { get; init; }
-    public int ParticipantsCount { get; init; }
 
     /// <summary>
     /// Creates a detail response from an Activity entity.
     /// </summary>
-    public static new ActivityDetailResponse FromEntity(Domain.Entities.Activity entity)
+    public static new ActivityDetailResponse FromEntity(Domain.Entities.Activity entity, string? employeeId = null)
     {
         Dictionary<string, object>? configDict = null;
         if (entity.Config != null)
@@ -231,7 +243,9 @@ public record ActivityDetailResponse : ActivityResponse
             Status = entity.Status,
             CreatedAt = entity.CreatedAt,
             Config = configDict,
-            ParticipantsCount = entity.Participants?.Count ?? 0
+            ParticipantsCount = entity.ParticipantsCount,
+            IsRegistered = !string.IsNullOrEmpty(employeeId) &&
+                           entity.Participants?.Any(p => p.EmployeeId == employeeId) == true
         };
     }
 }

@@ -90,7 +90,9 @@ public class ActivityCommandServiceImpl : IActivityCommandService
         var existing = await _activityDao.GetByIdAsync(activityId)
             ?? throw new KeyNotFoundException($"Activity with ID {activityId} not found");
 
-        await _activityDao.DeleteAsync(activityId);
+        // Soft delete - close the activity instead of removing
+        existing.Status = ActivityStatus.CLOSED;
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task<Entities.Activity> UpdateActivityStatusAsync(string activityId, ActivityStatus status)

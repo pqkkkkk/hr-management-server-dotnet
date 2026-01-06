@@ -79,11 +79,11 @@ public class ActivityController : ControllerBase
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<ActivityDetailResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetActivityById([FromRoute] string id)
+    public async Task<IActionResult> GetActivityById([FromRoute] string id, [FromQuery] string? employeeId = null)
     {
         var activity = await _activityQueryService.GetActivityByIdAsync(id)
             ?? throw new KeyNotFoundException($"Activity with ID {id} not found.");
-        var response = ActivityDetailResponse.FromEntity(activity);
+        var response = ActivityDetailResponse.FromEntity(activity, employeeId);
         return Ok(ApiResponse<ActivityDetailResponse>.Ok(response));
     }
 
@@ -96,6 +96,7 @@ public class ActivityController : ControllerBase
     /// <param name="type">Filter by activity type.</param>
     /// <param name="status">Filter by status.</param>
     /// <param name="isActive">Filter by active/inactive status.</param>
+    /// <param name="employeeId">Optional employee ID to check registration status.</param>
     /// <returns>Paginated list of activities.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<ActivityResponse>>), StatusCodes.Status200OK)]
@@ -105,7 +106,8 @@ public class ActivityController : ControllerBase
         [FromQuery] string? nameContains = null,
         [FromQuery] ActivityType? type = null,
         [FromQuery] ActivityStatus? status = null,
-        [FromQuery] bool? isActive = null)
+        [FromQuery] bool? isActive = null,
+        [FromQuery] string? employeeId = null)
     {
         var filter = new ActivityFilter
         {
@@ -120,7 +122,7 @@ public class ActivityController : ControllerBase
         var result = await _activityQueryService.GetActivitiesAsync(filter);
 
         var response = PagedResult<ActivityResponse>.Create(
-            result.Content.Select(ActivityResponse.FromEntity).ToList(),
+            result.Content.Select(a => ActivityResponse.FromEntity(a, employeeId)).ToList(),
             result.TotalElements,
             result.Number + 1,
             result.Size
@@ -152,7 +154,7 @@ public class ActivityController : ControllerBase
         var result = await _activityQueryService.GetMyActivitiesAsync(employeeId, filter);
 
         var response = PagedResult<ActivityResponse>.Create(
-            result.Content.Select(ActivityResponse.FromEntity).ToList(),
+            result.Content.Select(a => ActivityResponse.FromEntity(a, employeeId)).ToList(),
             result.TotalElements,
             result.Number + 1, // Convert back to 1-indexed for Create method
             result.Size
