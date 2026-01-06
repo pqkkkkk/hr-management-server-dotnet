@@ -9,6 +9,7 @@ public record UserWalletResponse
 {
     public string UserWalletId { get; init; } = string.Empty;
     public string UserId { get; init; } = string.Empty;
+    public string UserName { get; init; } = string.Empty;
     public string ProgramId { get; init; } = string.Empty;
     public int PersonalPoint { get; init; }
     public int GivingBudget { get; init; }
@@ -23,6 +24,7 @@ public record UserWalletResponse
         {
             UserWalletId = entity.UserWalletId,
             UserId = entity.UserId,
+            UserName = entity.UserName,
             ProgramId = entity.ProgramId,
             PersonalPoint = entity.PersonalPoint,
             GivingBudget = entity.GivingBudget,

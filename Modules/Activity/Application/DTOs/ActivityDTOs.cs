@@ -150,6 +150,12 @@ public record RegisterParticipantRequest
     /// </summary>
     [Required]
     public string EmployeeId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Employee name for display purposes.
+    /// </summary>
+    [StringLength(255)]
+    public string EmployeeName { get; init; } = string.Empty;
 }
 
 #endregion
@@ -238,6 +244,7 @@ public record ParticipantResponse
     public string ParticipantId { get; init; } = string.Empty;
     public string ActivityId { get; init; } = string.Empty;
     public string EmployeeId { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
     public DateTime JoinedAt { get; init; }
     public ParticipantStatus Status { get; init; }
     public decimal TotalScore { get; init; }
@@ -252,6 +259,7 @@ public record ParticipantResponse
             ParticipantId = entity.ParticipantId,
             ActivityId = entity.ActivityId,
             EmployeeId = entity.EmployeeId,
+            EmployeeName = entity.EmployeeName,
             JoinedAt = entity.JoinedAt,
             Status = entity.Status,
             TotalScore = entity.TotalScore
@@ -266,6 +274,7 @@ public record LeaderboardEntryResponse
 {
     public int Rank { get; init; }
     public string EmployeeId { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
     public decimal TotalScore { get; init; }
     public string ParticipantId { get; init; } = string.Empty;
 
@@ -278,6 +287,7 @@ public record LeaderboardEntryResponse
         {
             Rank = rank,
             EmployeeId = entity.EmployeeId,
+            EmployeeName = entity.EmployeeName,
             TotalScore = entity.TotalScore,
             ParticipantId = entity.ParticipantId
         };

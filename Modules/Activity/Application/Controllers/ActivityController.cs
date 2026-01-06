@@ -217,7 +217,7 @@ public class ActivityController : ControllerBase
     /// Registers an employee to an activity.
     /// </summary>
     /// <param name="id">The activity ID.</param>
-    /// <param name="employeeId">The employee ID to register.</param>
+    /// <param name="request">The registration request containing employee details.</param>
     /// <returns>The created participant.</returns>
     [HttpPost("{id}/register")]
     [ProducesResponseType(typeof(ApiResponse<ParticipantResponse>), StatusCodes.Status201Created)]
@@ -225,9 +225,9 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RegisterParticipant(
         [FromRoute] string id,
-        [FromQuery] string employeeId)
+        [FromBody] RegisterParticipantRequest request)
     {
-        var participant = await _participantCommandService.RegisterParticipantAsync(id, employeeId);
+        var participant = await _participantCommandService.RegisterParticipantAsync(id, request.EmployeeId, request.EmployeeName);
         var response = ParticipantResponse.FromEntity(participant);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<ParticipantResponse>.Created(response));
     }

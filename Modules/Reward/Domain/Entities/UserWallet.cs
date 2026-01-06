@@ -24,6 +24,13 @@ public class UserWallet
     [StringLength(255)]
     public string UserId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// User name from external system (stored for display purposes)
+    /// </summary>
+    [Column("user_name")]
+    [StringLength(255)]
+    public string UserName { get; set; } = string.Empty;
+
     [Required]
     [Column("program_id")]
     [StringLength(255)]

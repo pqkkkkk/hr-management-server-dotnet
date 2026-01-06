@@ -29,7 +29,7 @@ public class ParticipantCommandServiceTests
 
         // activity-002 is OPEN for registration
         // Act
-        var result = await service.RegisterParticipantAsync("activity-002", "new-employee-001");
+        var result = await service.RegisterParticipantAsync("activity-002", "new-employee-001", "New Employee One");
 
         // Assert
         Assert.NotNull(result);
@@ -49,7 +49,7 @@ public class ParticipantCommandServiceTests
         // employee-001 is already in activity-001
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.RegisterParticipantAsync("activity-001", "employee-001"));
+            () => service.RegisterParticipantAsync("activity-001", "employee-001", "Employee One"));
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class ParticipantCommandServiceTests
         // activity-003 is COMPLETED
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.RegisterParticipantAsync("activity-003", "new-employee-002"));
+            () => service.RegisterParticipantAsync("activity-003", "new-employee-002", "New Employee Two"));
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class ParticipantCommandServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => service.RegisterParticipantAsync("non-existing-activity", "employee-001"));
+            () => service.RegisterParticipantAsync("non-existing-activity", "employee-001", "Employee One"));
     }
 
     #endregion
@@ -86,7 +86,7 @@ public class ParticipantCommandServiceTests
         var service = _fixture.GetService<IParticipantCommandService>();
 
         // First register a participant to remove
-        var participant = await service.RegisterParticipantAsync("activity-002", "temp-employee-remove");
+        var participant = await service.RegisterParticipantAsync("activity-002", "temp-employee-remove", "Temp Employee Remove");
 
         // Act
         await service.RemoveParticipantAsync("activity-002", "temp-employee-remove");
@@ -119,7 +119,7 @@ public class ParticipantCommandServiceTests
         var service = _fixture.GetService<IParticipantCommandService>();
 
         // Register a new participant to test status update
-        var participant = await service.RegisterParticipantAsync("activity-002", "status-test-employee");
+        var participant = await service.RegisterParticipantAsync("activity-002", "status-test-employee", "Status Test Employee");
 
         // Act
         var result = await service.UpdateParticipantStatusAsync(participant.ParticipantId, ParticipantStatus.DISQUALIFIED);

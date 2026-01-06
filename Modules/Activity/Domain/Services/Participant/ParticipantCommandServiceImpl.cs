@@ -24,7 +24,7 @@ public class ParticipantCommandServiceImpl : IParticipantCommandService
         _participantDao = participantDao;
     }
 
-    public async Task<Entities.Participant> RegisterParticipantAsync(string activityId, string employeeId)
+    public async Task<Entities.Participant> RegisterParticipantAsync(string activityId, string employeeId, string employeeName)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
@@ -50,6 +50,7 @@ public class ParticipantCommandServiceImpl : IParticipantCommandService
                 ParticipantId = Guid.NewGuid().ToString(),
                 ActivityId = activityId,
                 EmployeeId = employeeId,
+                EmployeeName = employeeName,
                 JoinedAt = DateTime.UtcNow,
                 Status = ParticipantStatus.ACTIVE,
                 TotalScore = 0

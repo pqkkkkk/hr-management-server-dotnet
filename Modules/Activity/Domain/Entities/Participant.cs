@@ -28,6 +28,13 @@ public class Participant
     [StringLength(255)]
     public string EmployeeId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Employee name from external system (stored for display purposes)
+    /// </summary>
+    [Column("employee_name")]
+    [StringLength(255)]
+    public string EmployeeName { get; set; } = string.Empty;
+
     [Column("joined_at")]
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
