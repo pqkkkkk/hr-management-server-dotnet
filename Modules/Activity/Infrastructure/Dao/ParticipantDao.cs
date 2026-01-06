@@ -91,4 +91,11 @@ public class ParticipantDao : IParticipantDao
             .Take(top)
             .ToListAsync();
     }
+
+    public async Task<Participant?> GetByActivityAndEmployeeWithStatsAsync(string activityId, string employeeId)
+    {
+        return await _context.Participants
+            .Include(p => p.ActivityLogs)
+            .FirstOrDefaultAsync(p => p.ActivityId == activityId && p.EmployeeId == employeeId);
+    }
 }

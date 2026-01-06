@@ -282,6 +282,69 @@ public record ParticipantResponse
 }
 
 /// <summary>
+/// Response DTO for participant statistics.
+/// </summary>
+public record ParticipantStatsResponse
+{
+    public string ParticipantId { get; init; } = string.Empty;
+    public string ActivityId { get; init; } = string.Empty;
+    public string EmployeeId { get; init; } = string.Empty;
+    public string EmployeeName { get; init; } = string.Empty;
+    public DateTime JoinedAt { get; init; }
+    public ParticipantStatus Status { get; init; }
+    public decimal TotalScore { get; init; }
+
+    /// <summary>
+    /// Total distance in kilometers from approved activity logs.
+    /// </summary>
+    public decimal TotalDistanceKm { get; init; }
+
+    /// <summary>
+    /// Total number of activity log submissions (all statuses).
+    /// </summary>
+    public int TotalSubmissions { get; init; }
+
+    /// <summary>
+    /// Number of approved activity log submissions.
+    /// </summary>
+    public int ApprovedSubmissions { get; init; }
+
+    /// <summary>
+    /// Number of pending activity log submissions.
+    /// </summary>
+    public int PendingSubmissions { get; init; }
+
+    /// <summary>
+    /// Number of rejected activity log submissions.
+    /// </summary>
+    public int RejectedSubmissions { get; init; }
+
+    /// <summary>
+    /// Creates a response from a Participant entity with activity logs.
+    /// </summary>
+    public static ParticipantStatsResponse FromEntity(Participant entity)
+    {
+        var logs = entity.ActivityLogs?.ToList() ?? new List<ActivityLog>();
+
+        return new ParticipantStatsResponse
+        {
+            ParticipantId = entity.ParticipantId,
+            ActivityId = entity.ActivityId,
+            EmployeeId = entity.EmployeeId,
+            EmployeeName = entity.EmployeeName,
+            JoinedAt = entity.JoinedAt,
+            Status = entity.Status,
+            TotalScore = entity.TotalScore,
+            TotalDistanceKm = logs.Where(l => l.Status == ActivityLogStatus.APPROVED).Sum(l => l.Distance),
+            TotalSubmissions = logs.Count,
+            ApprovedSubmissions = logs.Count(l => l.Status == ActivityLogStatus.APPROVED),
+            PendingSubmissions = logs.Count(l => l.Status == ActivityLogStatus.PENDING),
+            RejectedSubmissions = logs.Count(l => l.Status == ActivityLogStatus.REJECTED)
+        };
+    }
+}
+
+/// <summary>
 /// Response DTO for leaderboard entry.
 /// </summary>
 public record LeaderboardEntryResponse

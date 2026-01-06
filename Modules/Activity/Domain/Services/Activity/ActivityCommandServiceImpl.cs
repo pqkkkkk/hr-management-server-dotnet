@@ -35,7 +35,7 @@ public class ActivityCommandServiceImpl : IActivityCommandService
             // Set default values
             activity.ActivityId = Guid.NewGuid().ToString();
             activity.CreatedAt = DateTime.UtcNow;
-            activity.Status = ActivityStatus.DRAFT;
+            activity.Status = ActivityStatus.IN_PROGRESS;
 
             var created = await _activityDao.CreateAsync(activity);
             await transaction.CommitAsync();

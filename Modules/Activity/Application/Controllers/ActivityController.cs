@@ -194,7 +194,7 @@ public class ActivityController : ControllerBase
     public async Task<IActionResult> DeleteActivity([FromRoute] string id)
     {
         await _activityCommandService.DeleteActivityAsync(id);
-        return NoContent();
+        return Ok(ApiResponse<object>.Ok(null, "Activity closed successfully"));
     }
 
     /// <summary>

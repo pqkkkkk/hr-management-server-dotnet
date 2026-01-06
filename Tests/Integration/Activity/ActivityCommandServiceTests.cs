@@ -56,7 +56,7 @@ public class ActivityCommandServiceTests
         Assert.NotNull(result);
         Assert.NotNull(result.ActivityId);
         Assert.Equal("Test Activity - Create Valid", result.Name);
-        Assert.Equal(ActivityStatus.DRAFT, result.Status);
+        Assert.Equal(ActivityStatus.IN_PROGRESS, result.Status);
         Assert.Equal("RUNNING_SIMPLE", result.TemplateId);
     }
 
