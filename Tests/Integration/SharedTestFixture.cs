@@ -70,6 +70,9 @@ public class SharedTestFixture : IDisposable
 
     public SharedTestFixture()
     {
+        // Set environment to Testing so migrations can skip seeding prod data
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+
         // Create unique temp file for this test run
         _dbPath = Path.Combine(Path.GetTempPath(), $"integration_test_{Guid.NewGuid()}.db");
         _connectionString = $"DataSource={_dbPath}";
