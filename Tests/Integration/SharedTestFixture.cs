@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using FluentMigrator.Runner;
 using HrManagement.Api.Data;
 using HrManagement.Api.Data.Migrations;
+using Moq;
 
 // Reward module
 using HrManagement.Api.Modules.Reward.Domain.Dao;
@@ -11,6 +12,8 @@ using HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
 using HrManagement.Api.Modules.Reward.Domain.Services.PointTransactionServices;
 using HrManagement.Api.Modules.Reward.Domain.Services.UserWalletServices;
 using HrManagement.Api.Modules.Reward.Infrastructure.Dao;
+using HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices;
+using HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices.DTOs;
 
 // Activity module
 using HrManagement.Api.Modules.Activity.Domain.Dao;
@@ -68,6 +71,11 @@ public class SharedTestFixture : IDisposable
     private readonly string _connectionString;
     public IServiceProvider ServiceProvider { get; }
 
+    /// <summary>
+    /// Mock for ISpringBootApiClient - exposed so tests can configure behavior
+    /// </summary>
+    public Mock<ISpringBootApiClient> MockSpringBootApiClient { get; }
+
     public SharedTestFixture()
     {
         // Set environment to Testing so migrations can skip seeding prod data
@@ -91,6 +99,18 @@ public class SharedTestFixture : IDisposable
                 .WithGlobalConnectionString(_connectionString)
                 .ScanIn(typeof(M202512_002_CreateRewardProgramTable).Assembly).For.Migrations())
             .AddLogging(lb => lb.AddFluentMigratorConsole());
+
+        // =============================================================================
+        // MOCK EXTERNAL SERVICES
+        // =============================================================================
+        MockSpringBootApiClient = new Mock<ISpringBootApiClient>();
+
+        // Default: return empty list (tests can override this via SetupMockUsers)
+        MockSpringBootApiClient
+            .Setup(x => x.GetAllUsersAsync(It.IsAny<List<string>?>()))
+            .ReturnsAsync(new List<UserBasicDto>());
+
+        services.AddSingleton<ISpringBootApiClient>(MockSpringBootApiClient.Object);
 
         // =============================================================================
         // REWARD MODULE REGISTRATION
@@ -155,6 +175,17 @@ public class SharedTestFixture : IDisposable
     {
         var scope = ServiceProvider.CreateScope();
         return scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    }
+
+    /// <summary>
+    /// Helper method to configure mock users for ISpringBootApiClient.
+    /// Call this at the beginning of tests that need specific user data.
+    /// </summary>
+    public void SetupMockUsers(List<UserBasicDto> users)
+    {
+        MockSpringBootApiClient
+            .Setup(x => x.GetAllUsersAsync(It.IsAny<List<string>?>()))
+            .ReturnsAsync(users);
     }
 
     public void Dispose()

@@ -152,6 +152,10 @@ builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Tem
     HrManagement.Api.Modules.Activity.Domain.Services.Template.RunningSimpleConfigProvider>();
 builder.Services.AddScoped<HrManagement.Api.Modules.Activity.Domain.Services.Template.ActivityTemplateRegistry>();
 
+// External Services
+builder.Services.AddHttpClient<HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices.ISpringBootApiClient, 
+    HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices.SpringBootApiClient>();
+
 
 var app = builder.Build();
 

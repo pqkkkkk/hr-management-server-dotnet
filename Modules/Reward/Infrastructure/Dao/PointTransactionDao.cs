@@ -28,7 +28,9 @@ public class PointTransactionDao : IPointTransactionDao
             .Include(t => t.Items)
                 .ThenInclude(i => i.RewardItem)
             .Include(t => t.SourceWallet)
+                .ThenInclude(w => w!.Program)
             .Include(t => t.DestinationWallet)
+                .ThenInclude(w => w!.Program)
             .FirstOrDefaultAsync(t => t.PointTransactionId == id);
     }
 
@@ -74,7 +76,9 @@ public class PointTransactionDao : IPointTransactionDao
             .Include(t => t.Items)
                 .ThenInclude(i => i.RewardItem)
             .Include(t => t.SourceWallet)
+                .ThenInclude(w => w!.Program)
             .Include(t => t.DestinationWallet)
+                .ThenInclude(w => w!.Program)
             .ToListAsync();
 
         return PagedResult<PointTransaction>.Create(items, totalItems, filter.PageNumber, filter.PageSize);

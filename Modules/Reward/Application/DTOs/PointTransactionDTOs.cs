@@ -166,6 +166,8 @@ public record PointTransactionResponse
     public string? DestinationWalletId { get; init; }
     public string? SourceUsername { get; init; }
     public string? DestinationUsername { get; init; }
+    public string? RewardProgramId { get; init; }
+    public string? RewardProgramName { get; init; }
     public DateTime CreatedAt { get; init; }
 
     /// <summary>
@@ -173,6 +175,9 @@ public record PointTransactionResponse
     /// </summary>
     public static PointTransactionResponse FromEntity(PointTransaction entity)
     {
+        // Get reward program from either source or destination wallet
+        var program = entity.SourceWallet?.Program ?? entity.DestinationWallet?.Program;
+
         return new PointTransactionResponse
         {
             PointTransactionId = entity.PointTransactionId,
@@ -182,6 +187,8 @@ public record PointTransactionResponse
             DestinationWalletId = entity.DestinationWalletId,
             SourceUsername = entity.SourceWallet?.UserName,
             DestinationUsername = entity.DestinationWallet?.UserName,
+            RewardProgramId = program?.RewardProgramId,
+            RewardProgramName = program?.Name,
             CreatedAt = entity.CreatedAt
         };
     }
@@ -199,6 +206,9 @@ public record PointTransactionDetailResponse : PointTransactionResponse
     /// </summary>
     public static new PointTransactionDetailResponse FromEntity(PointTransaction entity)
     {
+        // Get reward program from either source or destination wallet
+        var program = entity.SourceWallet?.Program ?? entity.DestinationWallet?.Program;
+
         return new PointTransactionDetailResponse
         {
             PointTransactionId = entity.PointTransactionId,
@@ -208,6 +218,8 @@ public record PointTransactionDetailResponse : PointTransactionResponse
             DestinationWalletId = entity.DestinationWalletId,
             SourceUsername = entity.SourceWallet?.UserName,
             DestinationUsername = entity.DestinationWallet?.UserName,
+            RewardProgramId = program?.RewardProgramId,
+            RewardProgramName = program?.Name,
             CreatedAt = entity.CreatedAt,
             Items = entity.Items.Select(ItemInTransactionResponse.FromEntity).ToList()
         };

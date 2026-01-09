@@ -4,6 +4,8 @@ using HrManagement.Api.Modules.Reward.Domain.Dao;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
+using HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices;
+
 namespace HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
 
 /// <summary>
@@ -15,15 +17,18 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
     private readonly AppDbContext _dbContext;
     private readonly IRewardProgramDao _rewardProgramDao;
     private readonly IUserWalletDao _userWalletDao;
+    private readonly ISpringBootApiClient _springBootApiClient;
 
     public RewardProgramCommandServiceImpl(
         AppDbContext dbContext,
         IRewardProgramDao rewardProgramDao,
-        IUserWalletDao userWalletDao)
+        IUserWalletDao userWalletDao,
+        ISpringBootApiClient springBootApiClient)
     {
         _dbContext = dbContext;
         _rewardProgramDao = rewardProgramDao;
         _userWalletDao = userWalletDao;
+        _springBootApiClient = springBootApiClient;
     }
 
     #region CreateRewardProgram
@@ -39,10 +44,10 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
         try
         {
             ValidateRewardProgram(program);
-            
+
             // Deactivate all existing active programs before creating new one
             await DeactivateAllActiveProgramsAsync();
-            
+
             PrepareRewardProgram(program);
 
             // Save the reward program (cascade saves items and policies)
@@ -60,7 +65,7 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
             throw;
         }
     }
-    
+
     /// <summary>
     /// Deactivates all currently active reward programs.
     /// Business rule: Only one reward program can be active at a time.
@@ -80,7 +85,7 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
                 policy.IsActive = false;
             }
         }
-        
+
         // Changes will be saved as part of the transaction in CreateRewardProgramAsync
     }
 
@@ -169,35 +174,33 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
 
     /// <summary>
     /// Creates wallets for all users in the system.
-    /// TODO: Implement external API call to get user list from Spring Boot.
+    /// Fetches users from internal API and creates a wallet for each.
     /// </summary>
     private async Task CreateWalletsForAllUsersAsync(RewardProgram program)
     {
-        // TODO: Replace this placeholder with actual API call to Spring Boot service
-        // 
-        // Implementation outline:
-        // 1. Inject HttpClient or create UserApiClient service
-        // 2. Call Spring Boot API: GET /api/users?role=EMPLOYEE,MANAGER
-        // 3. For each user:
-        //    - If role is MANAGER: create wallet with giving_budget = program.DefaultGivingBudget
-        //    - If role is EMPLOYEE: create wallet with giving_budget = 0
-        //    - All wallets start with personal_point = 0
-        //
-        // Example implementation:
-        // var users = await _userApiClient.GetAllUsersAsync();
-        // var wallets = users.Select(user => new UserWallet
-        // {
-        //     UserId = user.Id,
-        //     ProgramId = program.RewardProgramId,
-        //     PersonalPoint = 0,
-        //     GivingBudget = user.Role == "MANAGER" ? program.DefaultGivingBudget : 0
-        // }).ToList();
-        // await _userWalletDao.CreateBatchAsync(wallets);
+        // Fetch all managers and employees from internal API
+        // We only care about these roles for the reward program
+        var roles = new List<string> { "MANAGER", "EMPLOYEE" }; // Including all active roles
+        var users = await _springBootApiClient.GetAllUsersAsync(roles);
 
-        Console.WriteLine($"[PLACEHOLDER] Auto-create wallets for program {program.RewardProgramId} - Not implemented yet.");
-        Console.WriteLine("To implement: Call Spring Boot API to get all users and create wallets.");
+        if (users == null || !users.Any())
+        {
+            // Log warning?
+            return;
+        }
 
-        await Task.CompletedTask;
+        var wallets = users.Select(user => new UserWallet
+        {
+            UserWalletId = Guid.NewGuid().ToString(), // Auto-generate ID or let DAO handle it
+            UserId = user.UserId,
+            UserName = user.FullName,
+            ProgramId = program.RewardProgramId,
+            PersonalPoint = 0,
+            // Only MANAGERS get a giving budget
+            GivingBudget = user.Role == "MANAGER" ? program.DefaultGivingBudget : 0
+        }).ToList();
+
+        await _userWalletDao.CreateBatchAsync(wallets);
     }
 
     #endregion
