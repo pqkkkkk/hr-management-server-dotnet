@@ -4,6 +4,8 @@ using HrManagement.Api.Modules.Reward.Domain.Dao;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
+using HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices;
+
 namespace HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
 
 /// <summary>
@@ -15,15 +17,18 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
     private readonly AppDbContext _dbContext;
     private readonly IRewardProgramDao _rewardProgramDao;
     private readonly IUserWalletDao _userWalletDao;
+    private readonly ISpringBootApiClient _springBootApiClient;
 
     public RewardProgramCommandServiceImpl(
         AppDbContext dbContext,
         IRewardProgramDao rewardProgramDao,
-        IUserWalletDao userWalletDao)
+        IUserWalletDao userWalletDao,
+        ISpringBootApiClient springBootApiClient)
     {
         _dbContext = dbContext;
         _rewardProgramDao = rewardProgramDao;
         _userWalletDao = userWalletDao;
+        _springBootApiClient = springBootApiClient;
     }
 
     #region CreateRewardProgram
@@ -39,10 +44,10 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
         try
         {
             ValidateRewardProgram(program);
-            
+
             // Deactivate all existing active programs before creating new one
             await DeactivateAllActiveProgramsAsync();
-            
+
             PrepareRewardProgram(program);
 
             // Save the reward program (cascade saves items and policies)
@@ -60,7 +65,7 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
             throw;
         }
     }
-    
+
     /// <summary>
     /// Deactivates all currently active reward programs.
     /// Business rule: Only one reward program can be active at a time.
@@ -80,7 +85,7 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
                 policy.IsActive = false;
             }
         }
-        
+
         // Changes will be saved as part of the transaction in CreateRewardProgramAsync
     }
 
@@ -169,35 +174,33 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
 
     /// <summary>
     /// Creates wallets for all users in the system.
-    /// TODO: Implement external API call to get user list from Spring Boot.
+    /// Fetches users from internal API and creates a wallet for each.
     /// </summary>
     private async Task CreateWalletsForAllUsersAsync(RewardProgram program)
     {
-        // TODO: Replace this placeholder with actual API call to Spring Boot service
-        // 
-        // Implementation outline:
-        // 1. Inject HttpClient or create UserApiClient service
-        // 2. Call Spring Boot API: GET /api/users?role=EMPLOYEE,MANAGER
-        // 3. For each user:
-        //    - If role is MANAGER: create wallet with giving_budget = program.DefaultGivingBudget
-        //    - If role is EMPLOYEE: create wallet with giving_budget = 0
-        //    - All wallets start with personal_point = 0
-        //
-        // Example implementation:
-        // var users = await _userApiClient.GetAllUsersAsync();
-        // var wallets = users.Select(user => new UserWallet
-        // {
-        //     UserId = user.Id,
-        //     ProgramId = program.RewardProgramId,
-        //     PersonalPoint = 0,
-        //     GivingBudget = user.Role == "MANAGER" ? program.DefaultGivingBudget : 0
-        // }).ToList();
-        // await _userWalletDao.CreateBatchAsync(wallets);
+        // Fetch all managers and employees from internal API
+        // We only care about these roles for the reward program
+        var roles = new List<string> { "MANAGER", "EMPLOYEE" }; // Including all active roles
+        var users = await _springBootApiClient.GetAllUsersAsync(roles);
 
-        Console.WriteLine($"[PLACEHOLDER] Auto-create wallets for program {program.RewardProgramId} - Not implemented yet.");
-        Console.WriteLine("To implement: Call Spring Boot API to get all users and create wallets.");
+        if (users == null || !users.Any())
+        {
+            // Log warning?
+            return;
+        }
 
-        await Task.CompletedTask;
+        var wallets = users.Select(user => new UserWallet
+        {
+            UserWalletId = Guid.NewGuid().ToString(), // Auto-generate ID or let DAO handle it
+            UserId = user.UserId,
+            UserName = user.FullName,
+            ProgramId = program.RewardProgramId,
+            PersonalPoint = 0,
+            // Only MANAGERS get a giving budget
+            GivingBudget = user.Role == "MANAGER" ? program.DefaultGivingBudget : 0
+        }).ToList();
+
+        await _userWalletDao.CreateBatchAsync(wallets);
     }
 
     #endregion
@@ -282,40 +285,17 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
                 throw new ArgumentException("Reward program must have at least one reward item.");
             }
 
-            // Handle items update - remove old, add new
-            var existingItems = existingProgram.RewardItems.ToList();
-            foreach (var item in existingItems)
-            {
-                _dbContext.Set<RewardItem>().Remove(item);
-            }
-            foreach (var item in program.RewardItems)
-            {
-                item.ProgramId = program.RewardProgramId;
-                if (string.IsNullOrEmpty(item.RewardItemId))
-                {
-                    item.RewardItemId = Guid.NewGuid().ToString();
-                }
-            }
+            // Handle items update - smart update (Add/Update/Remove)
+            UpdateRewardItems(existingProgram, program.RewardItems);
 
-            // Handle policies update - remove old, add new
-            var existingPolicies = existingProgram.Policies.ToList();
-            foreach (var policy in existingPolicies)
-            {
-                _dbContext.Set<RewardProgramPolicy>().Remove(policy);
-            }
-            foreach (var policy in program.Policies)
-            {
-                policy.ProgramId = program.RewardProgramId;
-                if (string.IsNullOrEmpty(policy.PolicyId))
-                {
-                    policy.PolicyId = Guid.NewGuid().ToString();
-                }
-            }
+            // Handle policies update - smart update (Add/Update/Remove)
+            UpdatePolicies(existingProgram, program.Policies);
 
-            // Update the program
+            // Update the program properties
             _dbContext.Entry(existingProgram).CurrentValues.SetValues(program);
-            existingProgram.RewardItems = program.RewardItems;
-            existingProgram.Policies = program.Policies;
+
+            // Prevent navigation properties from being reset by SetValues if it touches them (it verifies scalar only usually but good to be safe)
+            // The helper methods above already modified the collections in the tracked entity 'existingProgram'
 
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -354,6 +334,91 @@ public class RewardProgramCommandServiceImpl : IRewardProgramCommandService
         }
 
         await _rewardProgramDao.DeleteAsync(programId);
+    }
+
+    #endregion
+    #region Smart Update Helpers
+
+    private void UpdateRewardItems(RewardProgram existingProgram, ICollection<RewardItem> incomingItems)
+    {
+        var existingItems = existingProgram.RewardItems.ToList();
+
+        // 1. Identify items to DELETE (in DB but not in Request)
+        // Check by ID. Incoming items always have an ID (generated by DTO if new).
+        // However, we don't know if the generated ID is "real" or "new" unless we check existence.
+        // Actually, for "Update" DTO, if the user didn't provide an ID, the DTO generated a NEW one. 
+        // So we match by ID. If no match -> New Item.
+        // If an existing item ID is NOT in the incoming list -> Delete it.
+
+        var incomingIds = incomingItems.Select(i => i.RewardItemId).ToHashSet();
+        var itemsToDelete = existingItems.Where(i => !incomingIds.Contains(i.RewardItemId)).ToList();
+
+        foreach (var item in itemsToDelete)
+        {
+            // We can check for usage here if we want to be nice, but EF will throw if FK violation occurs.
+            // Let's rely on EF for hard constraints, but we could wrap it later.
+            _dbContext.Set<RewardItem>().Remove(item);
+        }
+
+        // 2. Identify items to UPDATE and ADD
+        foreach (var incomingItem in incomingItems)
+        {
+            var existingItem = existingItems.FirstOrDefault(e => e.RewardItemId == incomingItem.RewardItemId);
+
+            if (existingItem != null)
+            {
+                // UPDATE existing
+                existingItem.Name = incomingItem.Name;
+                existingItem.RequiredPoints = incomingItem.RequiredPoints;
+                existingItem.Quantity = incomingItem.Quantity;
+                existingItem.ImageUrl = incomingItem.ImageUrl;
+                // ProgramId should already be correct, but ensure it
+                existingItem.ProgramId = existingProgram.RewardProgramId;
+            }
+            else
+            {
+                // ADD new
+                // Reset ProgramId just in case
+                incomingItem.ProgramId = existingProgram.RewardProgramId;
+                existingProgram.RewardItems.Add(incomingItem);
+            }
+        }
+    }
+
+    private void UpdatePolicies(RewardProgram existingProgram, ICollection<RewardProgramPolicy> incomingPolicies)
+    {
+        var existingPolicies = existingProgram.Policies.ToList();
+        var incomingIds = incomingPolicies.Select(p => p.PolicyId).ToHashSet();
+
+        // 1. Delete missing
+        var policiesToDelete = existingPolicies.Where(p => !incomingIds.Contains(p.PolicyId)).ToList();
+        foreach (var policy in policiesToDelete)
+        {
+            _dbContext.Set<RewardProgramPolicy>().Remove(policy);
+        }
+
+        // 2. Update/Add
+        foreach (var incomingPolicy in incomingPolicies)
+        {
+            var existingPolicy = existingPolicies.FirstOrDefault(e => e.PolicyId == incomingPolicy.PolicyId);
+            if (existingPolicy != null)
+            {
+                // Update
+                existingPolicy.PolicyType = incomingPolicy.PolicyType;
+                existingPolicy.UnitValue = incomingPolicy.UnitValue;
+                existingPolicy.PointsPerUnit = incomingPolicy.PointsPerUnit;
+                existingPolicy.ProgramId = existingProgram.RewardProgramId;
+            }
+            else
+            {
+                // Add
+                incomingPolicy.ProgramId = existingProgram.RewardProgramId;
+                // New polices on an active program should probably be active by default? 
+                // Using the same logic as Create:
+                incomingPolicy.IsActive = existingProgram.Status == ProgramStatus.ACTIVE;
+                existingProgram.Policies.Add(incomingPolicy);
+            }
+        }
     }
 
     #endregion

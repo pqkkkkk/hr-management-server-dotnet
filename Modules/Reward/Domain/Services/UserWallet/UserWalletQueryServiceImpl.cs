@@ -47,4 +47,18 @@ public class UserWalletQueryServiceImpl : IUserWalletQueryService
 
         return await _userWalletDao.GetByUserIdAsync(userId);
     }
+
+    /// <summary>
+    /// Gets all wallets for a specific program with pagination.
+    /// </summary>
+    public async Task<(List<UserWallet> Items, int TotalCount)> GetWalletsByProgramAsync(
+        string programId, int pageNumber = 1, int pageSize = 20)
+    {
+        if (string.IsNullOrWhiteSpace(programId))
+        {
+            throw new ArgumentException("Program ID is required.", nameof(programId));
+        }
+
+        return await _userWalletDao.GetByProgramIdAsync(programId, pageNumber, pageSize);
+    }
 }

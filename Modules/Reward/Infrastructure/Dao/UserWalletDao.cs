@@ -48,6 +48,25 @@ public class UserWalletDao : IUserWalletDao
     }
 
     /// <summary>
+    /// Gets wallets for a specific program with pagination.
+    /// </summary>
+    public async Task<(List<UserWallet> Items, int TotalCount)> GetByProgramIdAsync(
+        string programId, int pageNumber, int pageSize)
+    {
+        var query = _context.UserWallets
+            .Where(w => w.ProgramId == programId)
+            .OrderBy(w => w.UserName);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    /// <summary>
     /// Gets all wallets for a specific user with Program details.
     /// </summary>
     public async Task<List<UserWallet>> GetByUserIdAsync(string userId)

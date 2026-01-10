@@ -1,6 +1,7 @@
 using Xunit;
 using HrManagement.Api.Modules.Reward.Domain.Entities;
 using HrManagement.Api.Modules.Reward.Domain.Services.RewardProgramServices;
+using HrManagement.Api.Modules.Reward.Infrastructure.ExternalServices.DTOs;
 using HrManagement.Api.Tests.Integration;
 using static HrManagement.Api.Modules.Reward.Domain.Entities.RewardEnums;
 
@@ -28,7 +29,14 @@ public class RewardProgramCommandServiceTests
     [Fact]
     public async Task CreateRewardProgram_ValidProgram_CreatesSuccessfully()
     {
-        // Arrange
+        // Arrange - Setup mock users for this test
+        var mockUsers = new List<UserBasicDto>
+        {
+            new UserBasicDto { UserId = "test-user-1", FullName = "Test Manager", Email = "manager@test.com", Role = "MANAGER" },
+            new UserBasicDto { UserId = "test-user-2", FullName = "Test Employee", Email = "employee@test.com", Role = "EMPLOYEE" }
+        };
+        _fixture.SetupMockUsers(mockUsers);
+
         var service = _fixture.GetService<IRewardProgramCommandService>();
         var program = new RewardProgram
         {
@@ -69,6 +77,21 @@ public class RewardProgramCommandServiceTests
         // Verify IDs are generated for items and policies
         Assert.All(result.RewardItems, item => Assert.NotNull(item.RewardItemId));
         Assert.All(result.Policies, policy => Assert.NotNull(policy.PolicyId));
+
+        // Verify wallets are created for mock users (2 test users configured above)
+        var dbContext = _fixture.CreateDbContext();
+        var wallets = dbContext.UserWallets.Where(w => w.ProgramId == result.RewardProgramId).ToList();
+        Assert.Equal(2, wallets.Count);
+
+        // Verify manager gets giving budget, employee gets 0
+        var managerWallet = wallets.FirstOrDefault(w => w.UserId == "test-user-1");
+        var employeeWallet = wallets.FirstOrDefault(w => w.UserId == "test-user-2");
+        Assert.NotNull(managerWallet);
+        Assert.NotNull(employeeWallet);
+        Assert.Equal(50, managerWallet.GivingBudget); // Manager gets DefaultGivingBudget
+        Assert.Equal(0, employeeWallet.GivingBudget); // Employee gets 0
+        Assert.Equal(0, managerWallet.PersonalPoint);
+        Assert.Equal(0, employeeWallet.PersonalPoint);
     }
 
     [Fact]

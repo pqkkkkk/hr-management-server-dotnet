@@ -23,6 +23,12 @@ public interface IUserWalletDao
     Task<List<UserWallet>> GetByProgramIdAsync(string programId);
 
     /// <summary>
+    /// Gets wallets for a specific program with pagination.
+    /// </summary>
+    Task<(List<UserWallet> Items, int TotalCount)> GetByProgramIdAsync(
+        string programId, int pageNumber, int pageSize);
+
+    /// <summary>
     /// Gets all wallets for a specific user.
     /// </summary>
     Task<List<UserWallet>> GetByUserIdAsync(string userId);
