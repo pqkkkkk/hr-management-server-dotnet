@@ -110,6 +110,12 @@ public class SharedTestFixture : IDisposable
             .Setup(x => x.GetAllUsersAsync(It.IsAny<List<string>?>()))
             .ReturnsAsync(new List<UserBasicDto>());
 
+        // Default: return empty list for batch timesheet statistics
+        MockSpringBootApiClient
+            .Setup(x => x.GetBatchTimesheetStatisticsAsync(
+                It.IsAny<List<string>>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(new List<TimesheetStatisticsDto>());
+
         services.AddSingleton<ISpringBootApiClient>(MockSpringBootApiClient.Object);
 
         // =============================================================================
@@ -125,6 +131,10 @@ public class SharedTestFixture : IDisposable
         services.AddScoped<IPointTransactionQueryService, PointTransactionQueryServiceImpl>();
         services.AddScoped<IPointTransactionCommandService, PointTransactionCommandServiceImpl>();
         services.AddScoped<IUserWalletQueryService, UserWalletQueryServiceImpl>();
+
+        // Auto Point Distribution Service
+        services.AddScoped<HrManagement.Api.Modules.Reward.Domain.Services.AutoPointDistribution.IAutoPointDistributionService,
+            HrManagement.Api.Modules.Reward.Domain.Services.AutoPointDistribution.AutoPointDistributionServiceImpl>();
 
         // =============================================================================
         // ACTIVITY MODULE REGISTRATION
@@ -186,6 +196,18 @@ public class SharedTestFixture : IDisposable
         MockSpringBootApiClient
             .Setup(x => x.GetAllUsersAsync(It.IsAny<List<string>?>()))
             .ReturnsAsync(users);
+    }
+
+    /// <summary>
+    /// Helper method to configure mock timesheet statistics for ISpringBootApiClient.
+    /// Call this at the beginning of tests that need specific timesheet data.
+    /// </summary>
+    public void SetupMockTimesheetStatistics(List<TimesheetStatisticsDto> statistics)
+    {
+        MockSpringBootApiClient
+            .Setup(x => x.GetBatchTimesheetStatisticsAsync(
+                It.IsAny<List<string>>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(statistics);
     }
 
     public void Dispose()

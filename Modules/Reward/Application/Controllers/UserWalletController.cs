@@ -47,4 +47,30 @@ public class UserWalletController : ControllerBase
 
         return Ok(ApiResponse<UserWalletResponse>.Ok(response));
     }
+
+    /// <summary>
+    /// Gets all wallets for a reward program with pagination.
+    /// </summary>
+    /// <remarks>
+    /// Used by admin to view all users and their points in a reward program.
+    /// </remarks>
+    /// <param name="programId">The reward program ID.</param>
+    /// <param name="pageNumber">Page number (default: 1).</param>
+    /// <param name="pageSize">Items per page (default: 20).</param>
+    /// <returns>Paginated list of wallets.</returns>
+    [HttpGet("program/{programId}")]
+    [ProducesResponseType(typeof(PagedResult<UserWalletResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetWalletsByProgram(
+        [FromRoute] string programId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var (wallets, totalCount) = await _userWalletQueryService.GetWalletsByProgramAsync(
+            programId, pageNumber, pageSize);
+
+        var items = wallets.Select(UserWalletResponse.FromEntity).ToList();
+        var response = PagedResult<UserWalletResponse>.Create(items, totalCount, pageNumber, pageSize);
+
+        return Ok(response);
+    }
 }
