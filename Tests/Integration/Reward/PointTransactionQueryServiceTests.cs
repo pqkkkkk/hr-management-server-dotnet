@@ -341,4 +341,58 @@ public class PointTransactionQueryServiceTests
     }
 
     #endregion
+
+    #region GetAllAsync - Filter by SourceUserId Tests
+
+    [Fact]
+    public async Task GetAllAsync_FilterBySourceUserId_ReturnsSenderTransactionsOnly()
+    {
+        // Arrange
+        var service = _fixture.GetService<IPointTransactionQueryService>();
+        // manager-001 has wallet-001 and is the sender (source) for GIFT transactions
+        var filter = new PointTransactionFilter
+        {
+            PageNumber = 1,
+            PageSize = 20,
+            SourceWalletId = "manager-001"
+        };
+
+        // Act
+        var result = await service.GetPointTransactionsAsync(filter);
+
+        // Assert
+        Assert.NotNull(result);
+        // Verify all transactions have manager-001 as sender
+        Assert.All(result.Content, tx =>
+            Assert.Equal("manager-001", tx.SourceWallet?.UserId));
+    }
+
+    #endregion
+
+    #region GetAllAsync - Filter by DestinationUserId Tests
+
+    [Fact]
+    public async Task GetAllAsync_FilterByDestinationUserId_ReturnsReceiverTransactionsOnly()
+    {
+        // Arrange
+        var service = _fixture.GetService<IPointTransactionQueryService>();
+        // employee-001 is the receiver (destination) for some transactions
+        var filter = new PointTransactionFilter
+        {
+            PageNumber = 1,
+            PageSize = 20,
+            DestinationWalletId = "employee-001"
+        };
+
+        // Act
+        var result = await service.GetPointTransactionsAsync(filter);
+
+        // Assert
+        Assert.NotNull(result);
+        // Verify all transactions have employee-001 as receiver
+        Assert.All(result.Content, tx =>
+            Assert.Equal("employee-001", tx.DestinationWallet?.UserId));
+    }
+
+    #endregion
 }

@@ -65,6 +65,18 @@ public class PointTransactionDao : IPointTransactionDao
             query = query.Where(t => t.Type == filter.TransactionType.Value);
         }
 
+        if (!string.IsNullOrEmpty(filter.SourceWalletId))
+        {
+            query = query.Where(t =>
+                t.SourceWallet != null && t.SourceWallet.UserWalletId == filter.SourceWalletId);
+        }
+
+        if (!string.IsNullOrEmpty(filter.DestinationWalletId))
+        {
+            query = query.Where(t =>
+                t.DestinationWallet != null && t.DestinationWallet.UserWalletId == filter.DestinationWalletId);
+        }
+
         // Get total count before pagination
         var totalItems = await query.CountAsync();
 
