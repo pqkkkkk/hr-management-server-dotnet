@@ -10,7 +10,7 @@ namespace HrManagement.Api.Modules.Reward.Application.Controllers;
 /// In production, this would typically be handled by a scheduled job.
 /// </summary>
 [ApiController]
-[Route("api/rewards/programs/{programId}/distribute-points")]
+[Route("api/v1/rewards/programs/{programId}/distribute-points")]
 public class AutoPointDistributionController : ControllerBase
 {
     private readonly IAutoPointDistributionService _distributionService;
